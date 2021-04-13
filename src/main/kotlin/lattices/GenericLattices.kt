@@ -148,7 +148,7 @@ class ReversePowersetLattice<A>(s: Set<A>) : Lattice<Set<A>> {
 
 /**
  * The lift lattice for `sublattice`.
- * Supports implicit lifting and unlifting.
+ * Supports lifting and unlifting.
  */
 class LiftLattice<out L : Lattice<Any>>(val sublattice: L) : Lattice<LiftLattice.Lifted<Any>> {
 
@@ -172,14 +172,12 @@ class LiftLattice<out L : Lattice<Any>>(val sublattice: L) : Lattice<LiftLattice
 
     /**
      * Lift elements of the sublattice to this lattice.
-     * Note that this method is declared as implicit, so the conversion can be done automatically.
      */
     fun lift(x: Lattice<Any>): Lifted<Any> = Lift(x)
 
     /**
      * Un-lift elements of this lattice to the sublattice.
      * Throws an IllegalArgumentException if trying to unlift the bottom element
-     * Note that this method is declared as implicit, so the conversion can be done automatically.
      */
     fun unlift(x: Lifted<Any>): Any = when (x) {
         is Lift -> x.n

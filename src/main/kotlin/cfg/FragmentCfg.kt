@@ -11,8 +11,8 @@ object FragmentCfgObj {
     /**
      * Generates a CFG for each function in the given program.
      */
-    fun generateFromProgram(prog: AProgram, nodeBuilder: (CfgNode) -> FragmentCfg): Map<AFunDeclaration, FragmentCfg> =
-        prog.funs.map { f -> Pair(f, generateFromFunction(f, nodeBuilder)) }.toMap()
+    fun generateFromProgram(prog: AProgram, nodeBuilder: (CfgNode) -> FragmentCfg, declData: DeclarationData): Map<AFunDeclaration, FragmentCfg> =
+        prog.funs.associateWith { f -> generateFromFunction(f, nodeBuilder) }
 
     /**
      * Constructs an empty CFG.

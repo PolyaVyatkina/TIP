@@ -99,7 +99,7 @@ object SignLattice : FlatLattice<SignElement>(), LatticeOps<FlatLattice.FlatElem
      * Evaluates the expression `exp` in the abstract domain of signs, using `env` as the current environment.
      */
     fun eval(exp: AExpr, env: Map<ADeclaration, FlatElement>): FlatElement = when (exp) {
-        is AIdentifier -> env[exp]!!
+        is AIdentifier -> env[exp]!! // TODO(): use DeclarationData
         is ANumber -> sign(exp.value)
         is ABinaryOp -> when (exp.operator) {
             Plus -> plus(eval(exp.left, env), eval(exp.right, env))
@@ -111,8 +111,8 @@ object SignLattice : FlatLattice<SignElement>(), LatticeOps<FlatLattice.FlatElem
             else -> throw UnexpectedUnsupportedExpressionException("Unexpected expression $exp in eval")
         }
         is AInput -> Top
-        is AUnaryOp<*> -> NoPointers.LanguageRestrictionViolation("No pointers allowed in eval $exp")
-        is ACallFuncExpr -> NoCalls.LanguageRestrictionViolation("No calls allowed in eval $exp")
+        is AUnaryOp<*> -> NoPointers.languageRestrictionViolation("No pointers allowed in eval $exp")
+        is ACallFuncExpr -> NoCalls.languageRestrictionViolation("No calls allowed in eval $exp")
         else -> throw UnexpectedUnsupportedExpressionException("Unexpected expression $exp in eval")
     }
 

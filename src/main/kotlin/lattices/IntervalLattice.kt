@@ -1,15 +1,13 @@
 package lattices
 
-import jdk.vm.ci.sparc.SPARC.l2
 import java.lang.IllegalArgumentException
-import kotlin.math.sign
 
-typealias Element = Pair<IntervalLattice.Num, IntervalLattice.Num>
+private typealias Element = Pair<IntervalLattice.Num, IntervalLattice.Num>
 
 /**
  * The interval lattice.
  */
-class IntervalLattice : Lattice<Any>, LatticeOps<Element> {
+class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
 
     /**
      * The element of the IntervalLattice.
@@ -18,7 +16,7 @@ class IntervalLattice : Lattice<Any>, LatticeOps<Element> {
      * The interval (MInf, PInf) is the top element.
      */
 
-    public val FullInterval = Pair(MInf, PInf)
+    val FullInterval = Pair(MInf, PInf)
 
     val EmptyInterval = Pair(PInf, MInf)
 
@@ -26,22 +24,19 @@ class IntervalLattice : Lattice<Any>, LatticeOps<Element> {
 
     override val bottom = EmptyInterval
 
-    override fun lub(x: Any, y: Any): Any = when {
+    override fun lub(x: Element, y: Element): Element = when {
         x == FullInterval -> FullInterval
         x == EmptyInterval -> y
-        x is Pair<*, *> && y is Pair<*, *> -> when {
-            x.first is MInf && y.second is PInf -> FullInterval
-            x.first is MInf && x.second is IntNum && y.second is IntNum ->
-                Pair(MInf, IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i)))
-            x.first is IntNum && x.second is PInf && y.first is IntNum ->
-                Pair(IntNum(kotlin.math.min((x.first as IntNum).i, (y.first as IntNum).i)), PInf)
-            x.first is IntNum && x.second is IntNum && y.first is IntNum && y.second is IntNum ->
-                Pair(
-                    IntNum((x.first as IntNum).i.coerceAtMost((y.first as IntNum).i)),
-                    IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
-                )
-            else -> lub(y, x)
-        }
+        x.first is MInf && y.second is PInf -> FullInterval
+        x.first is MInf && x.second is IntNum && y.second is IntNum ->
+            Pair(MInf, IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i)))
+        x.first is IntNum && x.second is PInf && y.first is IntNum ->
+            Pair(IntNum(kotlin.math.min((x.first as IntNum).i, (y.first as IntNum).i)), PInf)
+        x.first is IntNum && x.second is IntNum && y.first is IntNum && y.second is IntNum ->
+            Pair(
+                IntNum((x.first as IntNum).i.coerceAtMost((y.first as IntNum).i)),
+                IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
+            )
         else -> lub(y, x)
     }
 

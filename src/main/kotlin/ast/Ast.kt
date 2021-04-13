@@ -46,7 +46,7 @@ object DerefOp : Operator, UnaryOperator {
 
 interface IAstNode {
 
-    val uid: () -> Int
+    val uid: Int
 
     val loc: Loc
 
@@ -62,7 +62,11 @@ sealed class AstNode {
      * Unique ID of the node.
      * Every new node object gets a fresh ID (but the ID is ignored in equals tests).
      */
-    val uid: () -> Int = { AstNodeObj.lastUid += 1; AstNodeObj.lastUid }
+    val uid: Int
+        get() {
+            AstNodeObj.lastUid += 1
+            return AstNodeObj.lastUid
+        }
 
     abstract val loc: Loc
 
