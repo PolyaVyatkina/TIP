@@ -1,7 +1,6 @@
 package lattices
 
 import ast.*
-import java.util.*
 
 /**
  * An element of the sign lattice.
@@ -16,11 +15,11 @@ enum class SignElement : FlatLattice.FlatElement {
 object SignLattice : FlatLattice<SignElement>(), LatticeOps<FlatLattice.FlatElement> {
 
     private val signValues: Map<FlatElement, Int> = mapOf(
-        Pair(Bot, 0),
-        Pair(FlatEl(SignElement.Zero), 1),
-        Pair(FlatEl(SignElement.Neg), 2),
-        Pair(FlatEl(SignElement.Pos), 3),
-        Pair(Top, 4)
+        Bot to 0,
+        FlatEl(SignElement.Zero) to 1,
+        FlatEl(SignElement.Neg) to 2,
+        FlatEl(SignElement.Pos) to 3,
+        Top to 4
     )
 
     private fun abs(op: List<List<FlatElement>>, x: FlatElement, y: FlatElement): FlatElement =
@@ -98,16 +97,16 @@ object SignLattice : FlatLattice<SignElement>(), LatticeOps<FlatLattice.FlatElem
     /**
      * Evaluates the expression `exp` in the abstract domain of signs, using `env` as the current environment.
      */
-    fun eval(exp: AExpr, env: Map<ADeclaration, FlatElement>): FlatElement = when (exp) {
-        is AIdentifier -> env[exp]!! // TODO(): use DeclarationData
+    fun eval(exp: AExpr, env: Map<ADeclaration, FlatElement>, declData: DeclarationData): FlatElement = when (exp) {
+        is AIdentifier -> env[AstNodeWithDeclaration(exp, declData).declaration]!!
         is ANumber -> sign(exp.value)
         is ABinaryOp -> when (exp.operator) {
-            Plus -> plus(eval(exp.left, env), eval(exp.right, env))
-            Minus -> minus(eval(exp.left, env), eval(exp.right, env))
-            Times -> times(eval(exp.left, env), eval(exp.right, env))
-            Divide -> div(eval(exp.left, env), eval(exp.right, env))
-            GreaterThan -> gt(eval(exp.left, env), eval(exp.right, env))
-            Eqq -> eqq(eval(exp.left, env), eval(exp.right, env))
+            Plus -> plus(eval(exp.left, env, declData), eval(exp.right, env, declData))
+            Minus -> minus(eval(exp.left, env, declData), eval(exp.right, env, declData))
+            Times -> times(eval(exp.left, env, declData), eval(exp.right, env, declData))
+            Divide -> div(eval(exp.left, env, declData), eval(exp.right, env, declData))
+            GreaterThan -> gt(eval(exp.left, env, declData), eval(exp.right, env, declData))
+            Eqq -> eqq(eval(exp.left, env, declData), eval(exp.right, env, declData))
             else -> throw UnexpectedUnsupportedExpressionException("Unexpected expression $exp in eval")
         }
         is AInput -> Top
