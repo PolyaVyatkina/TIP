@@ -5,7 +5,10 @@ import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
-import com.github.h0tk3y.betterParse.lexer.*
+import com.github.h0tk3y.betterParse.lexer.Token
+import com.github.h0tk3y.betterParse.lexer.TokenMatch
+import com.github.h0tk3y.betterParse.lexer.literalToken
+import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parsed
 import com.github.h0tk3y.betterParse.parser.Parser
 import java.io.File
@@ -137,7 +140,7 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
     val assignableExpression: Parser<Assignable<DerefOp>> by identifier or leftHandUnaryPointerExpression
 
     val zeraryPointerExpression: Parser<AExpr> by (Cursor * wspStr(allocToken)) or (Cursor * wspStr(nullToken)) map { (cur, token) ->
-        if (token.text == allocToken.name) AAlloc(offset2Loc(cur))
+        if (token.text == "alloc") AAlloc(offset2Loc(cur))
         else ANull(offset2Loc(cur))
     }
 
