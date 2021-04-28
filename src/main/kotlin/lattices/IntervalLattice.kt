@@ -16,9 +16,9 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
      * The interval (MInf, PInf) is the top element.
      */
 
-    val FullInterval = Pair(MInf, PInf)
+    val FullInterval = MInf to PInf
 
-    val EmptyInterval = Pair(PInf, MInf)
+    val EmptyInterval = PInf to MInf
 
     fun Int.toNum(): IntNum = IntNum(this)
 
@@ -29,14 +29,12 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
         x == EmptyInterval -> y
         x.first is MInf && y.second is PInf -> FullInterval
         x.first is MInf && x.second is IntNum && y.second is IntNum ->
-            Pair(MInf, IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i)))
+            MInf to IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
         x.first is IntNum && x.second is PInf && y.first is IntNum ->
-            Pair(IntNum(kotlin.math.min((x.first as IntNum).i, (y.first as IntNum).i)), PInf)
+            IntNum(kotlin.math.min((x.first as IntNum).i, (y.first as IntNum).i)) to PInf
         x.first is IntNum && x.second is IntNum && y.first is IntNum && y.second is IntNum ->
-            Pair(
-                IntNum((x.first as IntNum).i.coerceAtMost((y.first as IntNum).i)),
-                IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
-            )
+            IntNum((x.first as IntNum).i.coerceAtMost((y.first as IntNum).i)) to
+                    IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
         else -> lub(y, x)
     }
 
@@ -81,7 +79,7 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
             else if (b.second is PInf || a.second is PInf) PInf
             else if (b.second is IntNum && a.second is IntNum) IntNum((a.second as IntNum).i + (b.second as IntNum).i)
             else MInf
-        return Pair(low, high)
+        return low to high
     }
 
     /**
@@ -100,10 +98,8 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
             val sbNoZero = sb - 0
             val d = { x: Int, y: Int -> x / y }
             val arange = sbNoZero.map { opNum(a, it, d) }
-            Pair(
-                min(arange.map { it.first }.toSet()),
-                max(arange.map { it.second }.toSet())
-            )
+            min(arange.map { it.first }.toSet()) to
+                    max(arange.map { it.second }.toSet())
         }
     }
 
@@ -180,26 +176,24 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
             a.first is MInf && a.second is IntNum -> {
                 val x = (a.second as IntNum).i
                 when {
-                    b == 0 -> Pair(0.toNum(), 0.toNum())
-                    b < 0 -> Pair(op(x, b).toNum(), PInf)
-                    else -> Pair(MInf, op(x, b).toNum())
+                    b == 0 -> 0.toNum() to 0.toNum()
+                    b < 0 -> op(x, b).toNum() to PInf
+                    else -> MInf to op(x, b).toNum()
                 }
             }
             a.first is IntNum && a.second is PInf -> {
                 val x = (a.first as IntNum).i
                 when {
-                    b == 0 -> Pair(0.toNum(), 0.toNum())
-                    b < 0 -> Pair(MInf, op(x, b).toNum())
-                    else -> Pair(op(x, b).toNum(), PInf)
+                    b == 0 -> 0.toNum() to 0.toNum()
+                    b < 0 -> MInf to op(x, b).toNum()
+                    else -> op(x, b).toNum() to PInf
                 }
             }
             a.first is IntNum && a.second is IntNum -> {
                 val x = (a.first as IntNum).i
                 val y = (a.second as IntNum).i
-                Pair(
-                    min(setOf(op(x, b).toNum(), op(y, b).toNum())),
-                    max(setOf(op(x, b).toNum(), op(y, b).toNum()))
-                )
+                min(setOf(op(x, b).toNum(), op(y, b).toNum())) to
+                        max(setOf(op(x, b).toNum(), op(y, b).toNum()))
             }
             else -> throw IllegalArgumentException()
         }
@@ -216,10 +210,8 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
             val mult = { x: Int, y: Int -> x * y }
             val arange = sb.map { opNum(a, it, mult) }
             val brange = sa.map { opNum(b, it, mult) }
-            Pair(
-                min(arange.map { it.first }.toSet()),
-                max(brange.map { it.second }.toSet())
-            )
+            min(arange.map { it.first }.toSet()) to
+                    max(brange.map { it.second }.toSet())
         }
     }
 
@@ -229,15 +221,13 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
     private fun inv(b: Element): Element = when {
         b == FullInterval -> FullInterval
         b == EmptyInterval -> EmptyInterval
-        b.first is IntNum && b.second is PInf -> Pair(MInf, IntNum(-(b.first as IntNum).i))
-        b.first is MInf && b.second is IntNum -> Pair(IntNum(-(b.second as IntNum).i), PInf)
+        b.first is IntNum && b.second is PInf -> MInf to IntNum(-(b.first as IntNum).i)
+        b.first is MInf && b.second is IntNum -> IntNum(-(b.second as IntNum).i) to PInf
         b.first is IntNum && b.second is IntNum -> {
             val h = (b.first as IntNum).i
             val l = (b.second as IntNum).i
-            Pair(
-                IntNum(kotlin.math.min(-h, -l)),
-                IntNum(kotlin.math.max(-h, -l))
-            )
+            IntNum(kotlin.math.min(-h, -l)) to
+                    IntNum(kotlin.math.max(-h, -l))
         }
         else -> throw IllegalArgumentException()
     }
@@ -254,10 +244,10 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
             val l2 = (a.second as IntNum).i
             val h1 = (b.first as IntNum).i
             val h2 = (b.second as IntNum).i
-            if (l1 == h1 && h1 == l2 && l2 == h2) Pair(IntNum(1), IntNum(1))
-            else Pair(IntNum(0), IntNum(1))
+            if (l1 == h1 && h1 == l2 && l2 == h2) IntNum(1) to IntNum(1)
+            else IntNum(0) to IntNum(1)
         }
-        else -> Pair(IntNum(0), IntNum(1))
+        else -> IntNum(0) to IntNum(1)
     }
 
     /**
@@ -271,11 +261,11 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
             val l2 = (a.second as IntNum).i
             val h1 = (b.first as IntNum).i
             val h2 = (b.second as IntNum).i
-            if (h1 < l2) Pair(IntNum(1), IntNum(1))
-            else if (h2 < l1) Pair(IntNum(0), IntNum(0))
-            else Pair(IntNum(0), IntNum(1))
+            if (h1 < l2) IntNum(1) to IntNum(1)
+            else if (h2 < l1) IntNum(0) to IntNum(0)
+            else IntNum(0) to IntNum(1)
         }
-        else -> Pair(IntNum(0), IntNum(1))
+        else -> IntNum(0) to IntNum(1)
     }
 }
 

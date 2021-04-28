@@ -1,5 +1,7 @@
 package lattices
 
+import utils.withDefault
+
 /**
  * A (semi-)lattice.
  */
@@ -104,10 +106,10 @@ open class FlatLattice<X> : Lattice<FlatLattice.FlatElement> {
  */
 class PairLattice<L1 : Lattice<Any>, L2 : Lattice<Any>>(val sublattice1: L1, val sublattice2: L2) : Lattice<Pair<Any, Any>> {
 
-    override val bottom: Pair<Any, Any> = Pair(sublattice1.bottom, sublattice2.bottom)
+    override val bottom: Pair<Any, Any> = sublattice1.bottom to sublattice2.bottom
 
     override fun lub(x: Pair<Any, Any>, y: Pair<Any, Any>) =
-        Pair(sublattice1.lub(x.first, y.first), sublattice2.lub(x.second, y.second))
+        sublattice1.lub(x.first, y.first) to sublattice2.lub(x.second, y.second)
 
 }
 
@@ -122,7 +124,7 @@ class MapLattice<A, out L : Lattice<Any>>(ch: (A) -> Boolean, val sublattice: L)
     override val bottom: Map<A, Any> = mutableMapOf<A, Any>().withDefault { sublattice.bottom }
 
     override fun lub(x: Map<A, Any>, y: Map<A, Any>): Map<A, Any> =
-        x.keys.fold(y) { m, a -> m + Pair(a, sublattice.lub(x[a]!!, y[a]!!)) }.withDefault { sublattice.bottom }
+        x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a]!!, y[a]!!)) }.withDefault { sublattice.bottom }
 }
 
 /**
