@@ -115,7 +115,7 @@ open class FragmentCfg(val graphEntries: Set<CfgNode>, val graphExits: Set<CfgNo
      */
     fun rank(): Map<CfgNode, Int> {
         fun rankRec(elems: List<CfgNode>, visited: List<List<CfgNode>>, level: Int): Map<CfgNode, Int> {
-            val curLevel: Map<CfgNode, Int> = elems.map { Pair(it, level) }.toMap()
+            val curLevel: Map<CfgNode, Int> = elems.associateWith { level }
             val newNeighbours = elems.flatMap { it.succ }.filterNot { visited.flatten().contains(it) }.distinct()
             return if (newNeighbours.isEmpty()) curLevel
             else {

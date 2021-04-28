@@ -1,5 +1,7 @@
 package cfg
 
+import ast.AAssignStmt
+import ast.AFunDeclaration
 import ast.AstNode
 
 object CfgNodeObj {
@@ -64,7 +66,7 @@ data class CfgCallNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid(),
-    override val data: AstNode
+    override val data: AAssignStmt
 ) : CfgNode() {
     override fun toString() = "[Call] $data"
 }
@@ -77,7 +79,7 @@ data class CfgAfterCallNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid(),
-    override val data: AstNode
+    override val data: AAssignStmt
 ) : CfgNode() {
     override fun toString() = "[AfterCall] $data"
 }
@@ -89,7 +91,7 @@ data class CfgFunEntryNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid(),
-    override val data: AstNode
+    override val data: AFunDeclaration
 ) : CfgNode() {
     override fun toString() = "[FunEntry] $data"
 }
@@ -101,7 +103,7 @@ data class CfgFunExitNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid(),
-    override val data: AstNode
+    override val data: AFunDeclaration
 ) : CfgNode() {
     override fun toString() = "[FunExit] $data"
 }
