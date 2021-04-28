@@ -1,0 +1,3 @@
+package analysis
+
+interface CallContext
