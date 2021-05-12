@@ -1,5 +1,8 @@
 package ast
 
+import ast.AstPrinters.print
+import utils.Product
+
 object AstNodeObj {
     var lastUid: Int = 0
 }
@@ -44,7 +47,7 @@ object DerefOp : Operator, UnaryOperator {
     override fun toString(): String = "*"
 }
 
-interface IAstNode {
+interface IAstNode: Product {
 
     val uid: Int
 
@@ -56,7 +59,7 @@ interface IAstNode {
 /**
  * AST node.
  */
-sealed class AstNode {
+sealed class AstNode: Product {
 
     /**
      * Unique ID of the node.
@@ -70,7 +73,7 @@ sealed class AstNode {
 
     abstract val loc: Loc
 
-//    override fun toString(): String = "${this.print(PartialFunction.empty)}:$loc"
+//    override fun toString(): String = "${this.print()}:$loc"
 }
 
 //////////////// Expressions //////////////////////////
