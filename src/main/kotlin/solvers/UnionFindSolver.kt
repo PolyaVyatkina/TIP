@@ -29,7 +29,7 @@ class UnionFindSolver<A> {
         when {
             rep1 is Var<A> && rep2 is Var<A> -> mkUnion(rep1, rep2)
             rep1 is Var<A> -> mkUnion(rep1, rep2)
-            rep2 is Var<A> -> mkUnion(rep1, rep2)
+            rep2 is Var<A> -> mkUnion(rep2, rep1)
             rep1 is Cons<A> && rep2 is Cons<A> ->
                 if (rep1.doMatch(rep2)) {
                     mkUnion(rep1, rep2)

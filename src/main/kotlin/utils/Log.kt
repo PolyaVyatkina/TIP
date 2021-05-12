@@ -1,9 +1,9 @@
 package utils
 
-const val CONSOLE_RESET = "\u001b[0m"
-const val CONSOLE_RED = "\u001b[0;31m"
-const val CONSOLE_YELLOW = "\u033b[0;33m"
-const val CONSOLE_BLUE = "\u033b[0;34m"
+const val CONSOLE_RESET = "\u001B[0m"
+const val CONSOLE_RED = "\u001B[31m"
+const val CONSOLE_YELLOW = "\u001B[33m"
+const val CONSOLE_BLUE = "\u001B[34m"
 
 /**
  * Basic logging functionality.

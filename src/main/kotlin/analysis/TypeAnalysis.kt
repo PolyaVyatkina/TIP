@@ -1,7 +1,6 @@
 package analysis
 
 import ast.*
-import org.jetbrains.annotations.Nullable
 import solvers.Term
 import solvers.UnionFindSolver
 import types.*
@@ -23,13 +22,13 @@ class TypeAnalysis(val program: AProgram, val declData: DeclarationData) : Depth
         // generate the constraints by traversing the AST and solve them on-the-fly
         visit(program, null)
         val s = solver.solution()
-        log.info("Solution is:\n${s.map { "  [[${it.key}]] = ${it.value}" }.joinToString("\n")}")
 
         var ret: TypeData = mutableMapOf()
         // close the terms and create the TypeData
         object : DepthFirstAstVisitor<NullType> {
             val sol = solver.solution()
             val v = visit(program, null)
+
             // extract the type for each identifier declaration and each non-identifier expression
             override fun visit(node: AstNode, arg: NullType?) {
                 if (node is AExpr || node is ADeclaration)
@@ -51,9 +50,10 @@ class TypeAnalysis(val program: AProgram, val declData: DeclarationData) : Depth
         log.verb("Visiting ${node.javaClass.name} at ${node.loc}")
         when (node) {
             is AProgram -> {
-                node.funs.forEach {
-                    solver.unify(ast2typevar(node, declData), ast2typevar(it, declData))
-                }
+//                node.funs.forEach {
+//                    it.
+//                    solver.unify(ast2typevar(node, declData), ast2typevar(it, declData))
+//                }
             }
             is ANumber -> {
                 solver.unify(ast2typevar(node, declData), TipInt())
@@ -119,9 +119,9 @@ class TypeAnalysis(val program: AProgram, val declData: DeclarationData) : Depth
             }
             is ACallFuncExpr -> {
                 val params: List<Term<TipType>> = node.args.map { ast2typevar(it, declData) }
-                val ret: Term<TipType> = ast2typevar(node.targetFun, declData)
+                val ret: Term<TipType> = ast2typevar(node, declData)
                 val tf = TipFunction(params, ret)
-                solver.unify(ast2typevar(node, declData), tf)
+                solver.unify(ast2typevar(node.targetFun, declData), tf)
             }
         }
         visitChildren(node, null)
