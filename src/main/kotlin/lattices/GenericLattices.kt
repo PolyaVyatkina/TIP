@@ -4,6 +4,7 @@ import utils.withDefault
 
 /**
  * A (semi-)lattice.
+ * @param T is the type of the elements of this lattice.
  */
 interface Lattice<T> {
 
@@ -39,12 +40,13 @@ interface Lattice<T> {
 
 /**
  * The `n`-th product lattice made of `sublattice` lattices.
+ * @param T is the type of the elements of this lattice.
  */
-class UniformProductLattice<L : Lattice<Any>>(val sublattice: L, n: Int) : Lattice<List<Any>> {
+class UniformProductLattice<T, L : Lattice<T>>(val sublattice: L, n: Int) : Lattice<List<T>> {
 
     override val bottom = (1..n).map { sublattice.bottom }
 
-    override fun lub(x: List<Any>, y: List<Any>): List<Any> {
+    override fun lub(x: List<T>, y: List<T>): List<T> {
         if (x.size != y.size)
             error()
         return (x zip y).map { (xc, yc) -> sublattice.lub(xc, yc) }
@@ -103,27 +105,30 @@ open class FlatLattice<X> : Lattice<FlatLattice.FlatElement> {
 
 /**
  * The product lattice made by `l1` and `l2`.
+ * @param A is the type of the elements of `l1`.
+ * @param B is the type of the elements of `l2`.
  */
-class PairLattice<L1 : Lattice<Any>, L2 : Lattice<Any>>(val sublattice1: L1, val sublattice2: L2) : Lattice<Pair<Any, Any>> {
+class PairLattice<A, L1 : Lattice<A>, B, L2 : Lattice<B>>(val sublattice1: L1, val sublattice2: L2) : Lattice<Pair<A, B>> {
 
-    override val bottom: Pair<Any, Any> = sublattice1.bottom to sublattice2.bottom
+    override val bottom: Pair<A, B> = sublattice1.bottom to sublattice2.bottom
 
-    override fun lub(x: Pair<Any, Any>, y: Pair<Any, Any>) =
+    override fun lub(x: Pair<A, B>, y: Pair<A, B>) =
         sublattice1.lub(x.first, y.first) to sublattice2.lub(x.second, y.second)
 
 }
 
 /**
  * A lattice of maps from the set `X` to the lattice `sublattice`.
+ * @param T is the type of the elements of `sublattice`.
  * The set `X` is a subset of `A` and it is defined by the characteristic function `ch`, i.e. `a` is in `X` if and only if `ch(a)` returns true.
  * Bottom is the default value.
  */
-class MapLattice<A, out L : Lattice<Any>>(ch: (A) -> Boolean, val sublattice: L) : Lattice<Map<A, Any>> {
+class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L) : Lattice<Map<A, T>> {
     // note: 'ch' isn't used in the class, but having it as a class parameter avoids a lot of type annotations
 
-    override val bottom: Map<A, Any> = mutableMapOf<A, Any>().withDefault { sublattice.bottom }
+    override val bottom: Map<A, T> = mutableMapOf<A, T>().withDefault { sublattice.bottom }
 
-    override fun lub(x: Map<A, Any>, y: Map<A, Any>): Map<A, Any> =
+    override fun lub(x: Map<A, T>, y: Map<A, T>): Map<A, T> =
         x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a]!!, y[a]!!)) }.withDefault { sublattice.bottom }
 }
 
@@ -150,21 +155,22 @@ class ReversePowersetLattice<A>(s: Set<A>) : Lattice<Set<A>> {
 
 /**
  * The lift lattice for `sublattice`.
+ * @param T is the type of the elements of this lattice.
  * Supports lifting and unlifting.
  */
-class LiftLattice<out L : Lattice<Any>>(val sublattice: L) : Lattice<LiftLattice.Lifted<Any>> {
+class LiftLattice<T, out L : Lattice<T>>(val sublattice: L) : Lattice<LiftLattice.Lifted<T>> {
 
-    interface Lifted<L>
+    interface Lifted<T>
 
-    object Bottom : Lifted<Any> {
+    class Bottom<T> : Lifted<T> {
         override fun toString() = "LiftBot"
     }
 
-    data class Lift<L>(val n: L) : Lifted<L>
+    data class Lift<T>(val n: T) : Lifted<T>
 
-    override val bottom: Lifted<Any> = Bottom
+    override val bottom: Lifted<T> = Bottom()
 
-    override fun lub(x: Lifted<Any>, y: Lifted<Any>): Lifted<Any> =
+    override fun lub(x: Lifted<T>, y: Lifted<T>): Lifted<T> =
         when {
             x is Bottom -> y
             y is Bottom -> x
@@ -175,13 +181,13 @@ class LiftLattice<out L : Lattice<Any>>(val sublattice: L) : Lattice<LiftLattice
     /**
      * Lift elements of the sublattice to this lattice.
      */
-    fun lift(x: Lattice<Any>): Lifted<Any> = Lift(x)
+    public fun Lifted<T>.lift(x: T): Lifted<T> = Lift(x)
 
     /**
      * Un-lift elements of this lattice to the sublattice.
      * Throws an IllegalArgumentException if trying to unlift the bottom element
      */
-    fun unlift(x: Lifted<Any>): Any = when (x) {
+    fun unlift(x: Lifted<T>): T = when (x) {
         is Lift -> x.n
         is Bottom -> throw IllegalArgumentException("Cannot unlift bottom")
         else -> throw IllegalArgumentException("Cannot unlift $x")

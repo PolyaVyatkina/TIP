@@ -21,6 +21,53 @@ interface TipSublanguages : DepthFirstAstVisitor<Any> {
 }
 
 /**
+ * In this sub-language, function identifiers can only be used in direct calls, and indirect calls are prohibited.
+ */
+data class NoFunctionPointers(val declData: DeclarationData) : TipSublanguages {
+
+    override fun visit(node: AstNode, arg: Any?) {
+        when (node) {
+            is ACallFuncExpr ->
+                if (node.indirect) {
+                    languageRestrictionViolation("Indirect call of thr form $node are not supported")
+                    node.args.forEach { visit(it, arg) }
+                }
+            is AIdentifier ->
+                if (node is AFunDeclaration)
+                    languageRestrictionViolation("Identifier $node is a function identifier not appearing in a direct call expression")
+            else -> visitChildren(node, arg)
+        }
+    }
+}
+
+/**
+ * In this sub-language, the only allowed statements are the following:
+ *
+ * id = alloc
+ * id1 = &id2
+ * id1 = id2
+ * id1 = *id2
+ * *id1 = id2
+ * id = null
+ */
+object NormalizedForPointsToAnalysis : TipSublanguages {
+
+    override fun visit(node: AstNode, arg: Any?) {
+        when {
+            node is AAssignStmt && node.left is AIdentifier && node.right is AAlloc -> { }
+            node is AAssignStmt && node.left is AIdentifier && node.right is AUnaryOp<*> && node.right.target is AIdentifier -> { }
+            node is AAssignStmt && node.left is AIdentifier && node.right is AIdentifier -> { }
+            node is AAssignStmt && node.left is AUnaryOp<*> && node.left.target is AIdentifier && node.right is AIdentifier -> { }
+            node is AAssignStmt && node.left is AIdentifier && node.right is ANull -> { }
+            node is ABlock -> { }
+            node is AVarStmt -> { }
+            node is AStmt -> languageRestrictionViolation("Statement $arg is not allowed")
+            else -> visitChildren(node, arg)
+        }
+    }
+}
+
+/**
  * In this sub-language, no pointers are allowed.
  */
 object NoPointers : TipSublanguages {
@@ -41,5 +88,28 @@ object NoCalls : TipSublanguages {
         if (node is ACallFuncExpr)
             languageRestrictionViolation("Call $node is not allowed")
         visitChildren(node, arg)
+    }
+}
+
+/**
+ * In this sub-language, all calls are normalized, i.e. they only appear in statements of the form
+ *
+ * `x = f(e1, ..., en)`
+ *
+ * where `f` is a function identifier, `x` is a variable identifier
+ * and the parameters `e_i` are atomic expressions.
+ */
+data class NormalizedCalls(val declData: DeclarationData) : TipSublanguages {
+
+    override fun visit(ast: AstNode, x: Any?) {
+        when {
+            ast is AAssignStmt && ast.left is AIdentifier && ast.right is ACallFuncExpr -> {
+                if (!ast.right.indirect && ast.right.args.any { it !is AAtomicExpr })
+                    languageRestrictionViolation("One of the arguments $ast.right.args is not atomic")
+                if (ast.right.indirect) languageRestrictionViolation("Indirect call to expression ${ast.right.targetFun}")
+            }
+            ast is ACallFuncExpr -> languageRestrictionViolation("Call $ast outside an assignment is not allowed")
+            else -> visitChildren(ast, x)
+        }
     }
 }
