@@ -21,13 +21,14 @@ class TypeAnalysis(val program: AProgram, val declData: DeclarationData) : Depth
     override fun analyze(): TypeData {
         // generate the constraints by traversing the AST and solve them on-the-fly
         visit(program, null)
-        val s = solver.solution()
 
         var ret: TypeData = mutableMapOf()
         // close the terms and create the TypeData
         object : DepthFirstAstVisitor<NullType> {
             val sol = solver.solution()
-            val v = visit(program, null)
+            init {
+                visit(program, null)
+            }
 
             // extract the type for each identifier declaration and each non-identifier expression
             override fun visit(node: AstNode, arg: NullType?) {
@@ -50,10 +51,6 @@ class TypeAnalysis(val program: AProgram, val declData: DeclarationData) : Depth
         log.verb("Visiting ${node.javaClass.name} at ${node.loc}")
         when (node) {
             is AProgram -> {
-//                node.funs.forEach {
-//                    it.
-//                    solver.unify(ast2typevar(node, declData), ast2typevar(it, declData))
-//                }
             }
             is ANumber -> {
                 solver.unify(ast2typevar(node, declData), TipInt())

@@ -11,7 +11,7 @@ object FragmentCfgObj {
     /**
      * Generates a CFG for each function in the given program.
      */
-    fun generateFromProgram(prog: AProgram, nodeBuilder: (CfgNode) -> FragmentCfg, declData: DeclarationData): Map<AFunDeclaration, FragmentCfg> =
+    fun generateFromProgram(prog: AProgram, nodeBuilder: (CfgNode) -> FragmentCfg): Map<AFunDeclaration, FragmentCfg> =
         prog.funs.associateWith { f -> generateFromFunction(f, nodeBuilder) }
 
     /**
@@ -97,7 +97,7 @@ open class FragmentCfg(val graphEntries: Set<CfgNode>, val graphExits: Set<CfgNo
     /**
      * Returns the set of nodes in the CFG.
      */
-    fun nodes(): Set<CfgNode> = graphEntries.flatMap { entry -> nodesRec(entry) }.toSet()
+    val nodes: Set<CfgNode> = graphEntries.flatMap { entry -> nodesRec(entry) }.toSet()
 
     protected fun nodesRec(n: CfgNode, visited: MutableSet<CfgNode> = mutableSetOf()): MutableSet<CfgNode> {
         if (!visited.contains(n)) {
@@ -133,8 +133,8 @@ open class FragmentCfg(val graphEntries: Set<CfgNode>, val graphExits: Set<CfgNo
     fun toDot(labeler: (CfgNode) -> String, idGen: (CfgNode) -> String): String {
         val dotNodes = mutableMapOf<CfgNode, DotNode>()
         var dotArrows = mutableSetOf<DotArrow>()
-        nodes().forEach { n -> dotNodes[n] = DotNode(idGen(n), labeler(n), mapOf()) }
-        nodes().forEach { n ->
+        nodes.forEach { n -> dotNodes[n] = DotNode(idGen(n), labeler(n), mapOf()) }
+        nodes.forEach { n ->
             n.succ.forEach { dest ->
                 dotArrows.add(DotDirArrow(dotNodes[n]!!, dotNodes[dest]!!))
             }
@@ -152,5 +152,5 @@ open class FragmentCfg(val graphEntries: Set<CfgNode>, val graphExits: Set<CfgNo
  * @param funEntries map from AST function declarations to CFG function entry nodes
  * @param funExits map from AST function declarations to CFG function exit nodes
  */
-abstract class ProgramCfg(val prog: AProgram, val funEntries: Map<AFunDeclaration, CfgFunEntryNode>, val funExits: Map<AFunDeclaration, CfgFunExitNode>) :
+abstract class ProgramCfg(val prog: AProgram, open val funEntries: Map<AFunDeclaration, CfgFunEntryNode>, open val funExits: Map<AFunDeclaration, CfgFunExitNode>) :
     FragmentCfg(funEntries.values.toSet(), funEntries.values.toSet())

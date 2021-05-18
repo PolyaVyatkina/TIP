@@ -1,10 +1,8 @@
 package solvers
 
 import analysis.Dependencies
-import jdk.internal.org.jline.utils.Colors.s
 import lattices.*
 import utils.Log
-
 
 object FixpointSolvers {
 
@@ -118,19 +116,22 @@ interface SimpleMapLatticeFixpointSolver<N, T> : SimpleFixpointSolver<Map<N, T>>
  * Base trait for solvers for map lattices with lifted co-domains.
  * @tparam N type of the elements in the map domain.
  */
-interface MapLiftLatticeSolver<N, T> : MapLatticeSolver<N, T>, Dependencies<N> {
+interface MapLiftLatticeSolver<N, T> : MapLatticeSolver<N, LiftLattice.Lifted<T>>, Dependencies<N> {
 
-    override val lattice: MapLattice<N, T, LiftLattice<T, Lattice<T>>>
+    override val lattice: MapLattice<N, LiftLattice.Lifted<T>, LiftLattice<T, Lattice<T>>>
 
     /**
      * The transfer function for the sub-sub-lattice.
      */
     fun transferUnlifted(n: N, s: T): T
 
-    fun transfer(n: N, s: LiftLattice.Lifted<T>): LiftLattice.Lifted<T> =
+    override fun transfer(n: N, s: LiftLattice.Lifted<T>): LiftLattice.Lifted<T> =
         when (s) {
             is LiftLattice.Bottom<T> -> LiftLattice.Bottom()
-            is LiftLattice.Lift<T> -> s.lift(transferUnlifted(n, s.n))
+            is LiftLattice.Lift<T> -> {
+                val sub: LiftLattice<T, Lattice<T>> = lattice.sublattice
+                sub.lift(transferUnlifted(n, s.n))
+            }
             else -> throw IllegalArgumentException()
         }
 
@@ -172,6 +173,8 @@ interface Worklist<N> {
 interface ListSetWorklist<N> : Worklist<N> {
 
     var worklist: MutableSet<N>
+        get() = mutableSetOf()
+        set(value) = TODO()
 
     override fun add(n: N) {
         FixpointSolvers.log.verb("Adding $n to worklist")
@@ -203,6 +206,8 @@ interface WorklistFixpointSolver<N, T> : MapLatticeSolver<N, T>, ListSetWorklist
      * The current lattice element.
      */
     var x: Map<N, T>
+        get() = mapOf()
+        set(value) = TODO()
 
     override fun process(n: N) {
         val xn = x[n]
@@ -236,14 +241,14 @@ interface SimpleWorklistFixpointSolver<N, T> : WorklistFixpointSolver<N, T> {
 /**
  * The worklist-based fixpoint solver with initialization.
  */
-interface WorklistFixpointSolverWithInit<N, T> : WorklistFixpointSolver<N, T>, MapLiftLatticeSolver<N, T> {
+interface WorklistFixpointSolverWithInit<N, T> : WorklistFixpointSolver<N, LiftLattice.Lifted<T>>, MapLiftLatticeSolver<N, T> {
 
     /**
      * The start locations.
      */
     val first: Set<N>
 
-    override fun analyze(): Map<N, T> {
+    override fun analyze(): Map<N, LiftLattice.Lifted<T>> {
         x = lattice.bottom
         run(first)
         return x
@@ -273,7 +278,7 @@ interface WorklistFixpointPropagationFunctions<N, T> : ListSetWorklist<N> {
     /**
      * The initial lattice element at the start locations.
      */
-    fun init(): T
+    val init: T
 
     /**
      * Propagates lattice element y to node m.
@@ -290,7 +295,7 @@ interface WorklistFixpointPropagationFunctions<N, T> : ListSetWorklist<N> {
 
     fun analyze(): Map<N, T> {
         x = first.fold(lattice.bottom) { l, cur ->
-            l + (cur to init())
+            l + (cur to init)
         }
         run(first)
         return x
@@ -303,15 +308,16 @@ interface WorklistFixpointPropagationFunctions<N, T> : ListSetWorklist<N> {
  * Note that with this approach, each abstract state represents the program point *after* the node
  * (for a forward analysis, and opposite for a backward analysis).
  */
-abstract class WorklistFixpointPropagationSolver<N, T> : WorklistFixpointSolverWithInit<N, LiftLattice<T, Lattice<T>>>, WorklistFixpointPropagationFunctions<N, LiftLattice<T, Lattice<T>>> {
+interface WorklistFixpointPropagationSolver<N, T> : WorklistFixpointSolverWithInit<N, T>, WorklistFixpointPropagationFunctions<N, LiftLattice.Lifted<T>> {
 
-    abstract override val lattice: MapLattice<N, LiftLattice<T, Lattice<T>>, Lattice<LiftLattice<T, Lattice<T>>>>
+    override val lattice: MapLattice<N, LiftLattice.Lifted<T>, LiftLattice<T, Lattice<T>>>
 
     /**
      * The initial lattice element at the start locations.
      * Default: lift(bottom).
      */
-    override fun init(): LiftLattice<T, Lattice<T>> = lattice.sublattice.lift(lattice.sublattice.sublattice.bottom)
+    override val init: LiftLattice.Lifted<T>
+        get() = lattice.sublattice.lift(lattice.sublattice.sublattice.bottom)
 
     /**
      * This method overrides the one from [[WorklistFixpointSolver]].
@@ -327,11 +333,13 @@ abstract class WorklistFixpointPropagationSolver<N, T> : WorklistFixpointSolverW
         for (m in outdep(n)) propagate(y, m)
     }
 
-    override fun analyze(): Map<N, LiftLattice<T, Lattice<T>>> {
-        x = first.fold(lattice.bottom) { l, cur -> l.toMutableMap().plus(Pair(cur, init()))  }
+    override fun analyze(): Map<N, LiftLattice.Lifted<T>> {
+        x = first.fold(lattice.bottom) { l, cur -> l.toMutableMap().plus(Pair(cur, init))  }
         run(first)
         return x
     }
+
+    override var x: Map<N, LiftLattice.Lifted<T>>
 }
 
 /**
@@ -344,7 +352,7 @@ interface WorklistFixpointSolverWithInitAndSimpleWidening<N, T> : WorklistFixpoi
      * @param s input lattice element
      * @return output lattice element
      */
-    fun widen(s: T): T
+    fun widen(s: LiftLattice.Lifted<T>) : LiftLattice.Lifted<T>
 
     /**
      * Tells whether (src,dst) is a back-edge.
@@ -356,7 +364,7 @@ interface WorklistFixpointSolverWithInitAndSimpleWidening<N, T> : WorklistFixpoi
         FixpointSolvers.log.verb("Processing $n in state $xn")
         val y = funsub(n, x)
         if (y != xn) {
-            x = x + (n to (if (outdep(n).any { backedge(n, it) } ) widen(y) else y))
+            x = x + (n to if (outdep(n).any { backedge(n, it) } ) widen(y) else y)
             add(outdep(n))
         }
     }
@@ -365,7 +373,7 @@ interface WorklistFixpointSolverWithInitAndSimpleWidening<N, T> : WorklistFixpoi
 /**
  * The worklist-based fixpoint solver with initialization, simple widening, and narrowing.
  */
-interface WorklistFixpointSolverWithInitAndSimpleWideningAndNarrowing<N, T> : WorklistFixpointSolverWithInitAndSimpleWidening<N, T>, SimpleMapLatticeFixpointSolver<N, T> {
+interface WorklistFixpointSolverWithInitAndSimpleWideningAndNarrowing<N, T> : WorklistFixpointSolverWithInitAndSimpleWidening<N, T>, SimpleMapLatticeFixpointSolver<N, LiftLattice.Lifted<T>> {
 
     /**
      * Number of narrowing steps.
@@ -377,10 +385,10 @@ interface WorklistFixpointSolverWithInitAndSimpleWideningAndNarrowing<N, T> : Wo
      * @param x the lattice element
      * @param i number of iterations
      */
-    fun narrow(x: Map<N, T>, i: Int): Map<N, T> =
+    fun narrow(x: Map<N, LiftLattice.Lifted<T>>, i: Int): Map<N, LiftLattice.Lifted<T>> =
         if (i <= 0) x else narrow(function(x), i - 1) // uses the simple definition of 'fun' from SimpleMapLatticeFixpointSolver
 
-    override fun analyze(): Map<N, T> =
+    override fun analyze(): Map<N, LiftLattice.Lifted<T>> =
         narrow(super<WorklistFixpointSolverWithInitAndSimpleWidening>.analyze(), narrowingSteps)
-    }
+
 }

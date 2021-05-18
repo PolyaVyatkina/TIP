@@ -181,7 +181,7 @@ class LiftLattice<T, out L : Lattice<T>>(val sublattice: L) : Lattice<LiftLattic
     /**
      * Lift elements of the sublattice to this lattice.
      */
-    public fun Lifted<T>.lift(x: T): Lifted<T> = Lift(x)
+    fun lift(x: T): Lifted<T> = Lift(x)
 
     /**
      * Un-lift elements of this lattice to the sublattice.

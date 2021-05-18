@@ -7,10 +7,11 @@ import ast.AstNode
 object CfgNodeObj {
     var lastUid = 0
 
-    fun uid(): Int {
-        lastUid++
-        return lastUid
-    }
+    val uid: Int
+        get() {
+            lastUid++
+            return lastUid
+        }
 }
 
 /**
@@ -52,7 +53,7 @@ abstract class CfgNode {
 data class CfgStmtNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
-    override val id: Int = CfgNodeObj.uid(),
+    override val id: Int = CfgNodeObj.uid,
     override val data: AstNode
 ) : CfgNode() {
     override fun toString() = "[Stmt] $data"
@@ -65,7 +66,7 @@ data class CfgStmtNode(
 data class CfgCallNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
-    override val id: Int = CfgNodeObj.uid(),
+    override val id: Int = CfgNodeObj.uid,
     override val data: AAssignStmt
 ) : CfgNode() {
     override fun toString() = "[Call] $data"
@@ -78,7 +79,7 @@ data class CfgCallNode(
 data class CfgAfterCallNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
-    override val id: Int = CfgNodeObj.uid(),
+    override val id: Int = CfgNodeObj.uid,
     override val data: AAssignStmt
 ) : CfgNode() {
     override fun toString() = "[AfterCall] $data"
@@ -90,7 +91,7 @@ data class CfgAfterCallNode(
 data class CfgFunEntryNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
-    override val id: Int = CfgNodeObj.uid(),
+    override val id: Int = CfgNodeObj.uid,
     override val data: AFunDeclaration
 ) : CfgNode() {
     override fun toString() = "[FunEntry] $data"
@@ -102,7 +103,7 @@ data class CfgFunEntryNode(
 data class CfgFunExitNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
-    override val id: Int = CfgNodeObj.uid(),
+    override val id: Int = CfgNodeObj.uid,
     override val data: AFunDeclaration
 ) : CfgNode() {
     override fun toString() = "[FunExit] $data"

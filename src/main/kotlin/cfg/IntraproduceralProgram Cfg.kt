@@ -26,7 +26,7 @@ object IntraproceduralProgramCfgObj {
      * Generates an [[IntraproceduralProgramCfg]] from a program.
      */
     fun generateFromProgram(prog: AProgram, declData: DeclarationData): IntraproceduralProgramCfg {
-        val funGraphs = FragmentCfgObj.generateFromProgram(prog, simpleNodeBuilder(), declData)
+        val funGraphs = FragmentCfgObj.generateFromProgram(prog, simpleNodeBuilder())
         val allEntries = funGraphs.mapValues { cfg ->
             assert(cfg.value.graphEntries.size == 1)
             cfg.value.graphEntries.first() as CfgFunEntryNode

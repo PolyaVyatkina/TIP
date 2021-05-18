@@ -34,9 +34,10 @@ class AstNodeWithType(val n: AstNode, val data: TypeData) {
         is AFunDeclaration ->
             "${n.name}(${n.args.joinToString(",") { it.value }}): " +
                     "${this.theType ?: "??"}\n${AstNodeWithType(n.stmts, data).printer()}"
-        else -> /*throw IllegalArgumentException()*/ ""
+        else -> TODO()
     }
 
-    fun toTypedString(): String = n.print(printer())
+//    fun toTypedString(): String = n.print(printer())
+    fun toTypedString(): String = ""
 
 }

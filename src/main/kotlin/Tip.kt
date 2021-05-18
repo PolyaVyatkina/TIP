@@ -1,19 +1,20 @@
-import analysis.DeclarationAnalysis
-import analysis.TypeAnalysis
+import analysis.*
 import ast.AProgram
 import ast.AstNodeWithType
 import ast.DeclarationData
 import ast.TypeData
+import cfg.CfgNode
+import cfg.InterproceduralProgramCfgObj
+import cfg.IntraproceduralProgramCfgObj
 import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
 import com.github.h0tk3y.betterParse.parser.Parsed
 import parser.TIPGrammar
-import utils.Log
-import utils.OtherOutput
-import utils.Output
-import utils.OutputKindE
+import utils.*
 import java.io.File
-import java.lang.Exception
 import kotlin.system.exitProcess
+
+private typealias dfa = FlowSensitiveAnalysisObj.AnalysisType
+private typealias dfo = FlowSensitiveAnalysisObj.AnalysisOption
 
 /**
  * Options for running the TIP system.
@@ -52,7 +53,7 @@ class RunOption {
      */
     var steensgaard = false
 
-//    var dfAnalysis = Map[dfa.Value, dfo.Value]().withDefaultValue(dfo.Disabled)
+    var dfAnalysis: Map<dfa, dfo> = mapOf<dfa, dfo>().withDefaultValue(dfo.Disabled)
 
     /**
      * Source file, or directory containing .tip files.
@@ -90,6 +91,10 @@ class RunOption {
  * Command-line entry for the TIP system.
  */
 object Tip {
+
+    init {
+        Log.defaultLevel = Log.Level.INFO
+    }
 
     val log = Log.logger(this.javaClass)
 
@@ -152,7 +157,6 @@ object Tip {
      * Process the given file according to the specified options.
      */
     fun processFile(file: File, options: RunOption) {
-        println(file.name)
         val program = file.readText()
         val tipParser = TIPGrammar()
         tipParser.lastBreaks = mutableListOf(0)
@@ -162,11 +166,72 @@ object Tip {
         } else {
             val programNode = res.value as AProgram
             val declData: DeclarationData = DeclarationAnalysis(programNode).analyze()
+
+            // run selected intraprocedural flow-sensitive analyses
+            if (options.cfg || options.dfAnalysis.any { p -> p.value != dfo.Disabled && !p.value.interprocedural() }) {
+
+                // generate control-flow graph
+                val wcfg = IntraproceduralProgramCfgObj.generateFromProgram(programNode, declData)
+                if (options.cfg)
+                    Output.output(file, OtherOutput(OutputKindE.CFG), wcfg.toDot({ it.toString() }, { Output.dotIder(it) }), options.out)
+
+                options.dfAnalysis.forEach {
+                    if (!it.value.interprocedural()) {
+                        val an: FlowSensitiveAnalysis<CfgNode, *>? = FlowSensitiveAnalysisObj.select(it.key, it.value, wcfg, declData)
+                        // run the analysis
+                        val res = an!!.analyze()
+                        Output.output(file, DataFlowOutput(it.key), wcfg.toDot({ node ->
+                            Output.labeler(res, node)
+                        }, { node -> Output.dotIder(node) }), options.out)
+                    }
+                }
+            }
+
+            // run selected interprocedural flow-sensitive analyses
+            if (options.icfg || options.dfAnalysis.any { p -> p.value != dfo.Disabled && p.value.interprocedural() }) {
+
+                // generate control-flow graph
+                val wcfg = if (options.cfa) {
+                    InterproceduralProgramCfgObj.generateFromProgramWithCfa(programNode, declData)
+                } else {
+                    InterproceduralProgramCfgObj.generateFromProgram(programNode, declData)
+                }
+
+                if (options.icfg) {
+                    Output.output(file, OtherOutput(OutputKindE.ICFG), wcfg.toDot({ x ->
+                        x.toString()
+                    }, { node -> Output.dotIder(node) }), options.out)
+                }
+
+                options.dfAnalysis.forEach {
+                    val s = it.key
+                    val v = it.value
+                    if (v.interprocedural()) {
+                        val an = FlowSensitiveAnalysisObj.select(s, v, wcfg, declData)!!
+                        // run the analysis
+                        val res = an.analyze()
+                        val res2 =
+                            if (v.contextsensitive())
+                                Output.transform(res as Map<Pair<CallContext, CfgNode>, *>)
+                            else res
+                        Output.output(file, DataFlowOutput(s), wcfg.toDot({ node -> Output.labeler(res2, node) },
+                            { node -> Output.dotIder(node) }), options.out
+                        )
+                    }
+                }
+            }
+
             // run type analysis, if selected
             if (options.types) {
                 // (for information about the use of 'implicit', see [[tip.analysis.TypeAnalysis]])
                 val typeData: TypeData = TypeAnalysis(programNode, declData).analyze()
                 Output.output(file, OtherOutput(OutputKindE.TYPES), AstNodeWithType(programNode, typeData).toTypedString(), options.out)
+            }
+
+            // run control-flow analysis, if selected
+            if (options.cfa) {
+                val s = ControlFlowAnalysis(programNode, declData)
+                s.analyze()
             }
         }
         log.info("Success")
@@ -176,7 +241,6 @@ object Tip {
 fun main(args: Array<String>) {
     val tip = Tip
     // parse options
-    Log.defaultLevel = Log.Level.INFO
     val options = RunOption()
     var i = 0
     while (i < args.size) {
@@ -192,6 +256,15 @@ fun main(args: Array<String>) {
                 "-run" -> options.run = true
                 "-concolic" -> options.concolic = true
                 "-verbose" -> Log.defaultLevel = Log.Level.VERBOSE
+                "-sign", "-livevars", "-available", "-vbusy", "-reaching", "-constprop", "-interval", "-copyconstprop" -> {
+                    options.dfAnalysis += dfa.valueOf(args[i].drop(1)) to
+                            if (i + 1 < args.size && dfo.values().map { it.toString() }.contains(args[i + 1])) {
+                                i += 1
+                                dfo.valueOf(args[i])
+                            } else
+                                dfo.simple
+                    println(options.dfAnalysis)
+                }
                 else -> {
                     tip.log.error("Unrecognized option $s")
                     tip.printUsage()

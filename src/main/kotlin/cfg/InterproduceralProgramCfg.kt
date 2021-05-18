@@ -68,7 +68,7 @@ object InterproceduralProgramCfgObj {
      * Generates an interprocedural CFG from a program with [[ast.NormalizedCalls]] and [[ast.NoFunctionPointers]].
      */
     fun generateFromProgram(prog: AProgram, declData: DeclarationData): InterproceduralProgramCfg {
-        val funGraphs: Map<AFunDeclaration, FragmentCfg> = FragmentCfgObj.generateFromProgram(prog, callreturnNodeBuilder(), declData)
+        val funGraphs: Map<AFunDeclaration, FragmentCfg> = FragmentCfgObj.generateFromProgram(prog, callreturnNodeBuilder())
         val allEntries = funGraphs.mapValues { cfg ->
             assert(cfg.value.graphEntries.size == 1)
             cfg.value.graphEntries.first() as CfgFunEntryNode
@@ -91,7 +91,7 @@ object InterproceduralProgramCfgObj {
      * Generates an interprocedural CFG from a program with [[ast.NormalizedCalls]], using [[analysis.ControlFlowAnalysis]] for resolving function calls.
      */
     fun generateFromProgramWithCfa(prog: AProgram, declData: DeclarationData): InterproceduralProgramCfg {
-        val funGraphs = FragmentCfgObj.generateFromProgram(prog, callreturnNodeBuilder(), declData)
+        val funGraphs = FragmentCfgObj.generateFromProgram(prog, callreturnNodeBuilder())
         val allEntries = funGraphs.mapValues { cfg ->
             assert(cfg.value.graphEntries.size == 1)
             cfg.value.graphEntries.first() as CfgFunEntryNode
@@ -152,7 +152,7 @@ class InterproceduralProgramCfg(
     /**
      * The node corresponding to entry of the main function.
      */
-    val programEntry = funEntries[program.mainFunction()]
+    val programEntry = funEntries[program.mainFunction]
 
     /**
      * Map from [[cfg.CfgFunEntryNode]] to the set of [[cfg.CfgCallNode]]s calling the function.
@@ -180,7 +180,7 @@ class InterproceduralProgramCfg(
     var enclosingFunctionEntry = mapOf<CfgNode, CfgFunEntryNode>()
 
     private fun initdeps() {
-        nodes().forEach {
+        nodes.forEach {
             when (it) {
                 is CfgCallNode -> {
                     val invoked = callInfo(it.data)
@@ -213,7 +213,7 @@ class InterproceduralProgramCfg(
 
 
     /**
-     * An class with convenience methods for CFG entry node operations that involve the whole-program CFG.
+     * A class with convenience methods for CFG entry node operations that involve the whole-program CFG.
      */
     inner class IpNodeInfoEntry(nd: CfgFunEntryNode) {
 
@@ -229,7 +229,7 @@ class InterproceduralProgramCfg(
     }
 
     /**
-     * An implicit class with convenience methods for CFG call node operations that involve the whole-program CFG.
+     * A class with convenience methods for CFG call node operations that involve the whole-program CFG.
      */
     inner class IpNodeInfoCall(nd: CfgCallNode) {
 
@@ -245,7 +245,7 @@ class InterproceduralProgramCfg(
     }
 
     /**
-     * A  class with convenience methods for CFG after call node operations that involve the whole-program CFG.
+     * A class with convenience methods for CFG after call node operations that involve the whole-program CFG.
      */
     inner class IpNodeInfoAfterCall(nd: CfgAfterCallNode) {
 
@@ -262,7 +262,7 @@ class InterproceduralProgramCfg(
     }
 
     /**
-     * An implicit class with convenience methods for CFG exit node operations that involve the whole-program CFG.
+     * A class with convenience methods for CFG exit node operations that involve the whole-program CFG.
      */
     inner class IpNodeInfoExit(nd: CfgFunExitNode) {
 

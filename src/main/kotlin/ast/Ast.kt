@@ -1,6 +1,5 @@
 package ast
 
-import ast.AstPrinters.print
 import utils.Product
 
 object AstNodeObj {
@@ -47,7 +46,7 @@ object DerefOp : Operator, UnaryOperator {
     override fun toString(): String = "*"
 }
 
-interface IAstNode: Product {
+interface IAstNode : Product {
 
     val uid: Int
 
@@ -59,7 +58,7 @@ interface IAstNode: Product {
 /**
  * AST node.
  */
-sealed class AstNode: Product {
+sealed class AstNode : Product {
 
     /**
      * Unique ID of the node.
@@ -154,11 +153,7 @@ data class AWhileStmt(val guard: AExpr, val innerBlock: AStmtInNestedBlock, over
 
 data class AProgram(val funs: List<AFunDeclaration>, override val loc: Loc) : AstNode() {
 
-    fun mainFunction(): AFunDeclaration {
-        val main = findMainFunction()
-        if (main != null) return main
-        else throw RuntimeException("Missing main function, declared functions are $funs")
-    }
+    val mainFunction: AFunDeclaration = findMainFunction() ?: throw RuntimeException("Missing main function, declared functions are $funs")
 
     fun hasMainFunction(): Boolean = findMainFunction() != null
 

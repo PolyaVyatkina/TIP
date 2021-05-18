@@ -2,6 +2,7 @@ package utils
 
 import analysis.CallContext
 import analysis.FlowSensitiveAnalysis
+import analysis.FlowSensitiveAnalysisObj
 import cfg.*
 import java.io.File
 import java.io.PrintWriter
@@ -115,7 +116,7 @@ sealed class OutputKind
 /**
  * Output kind for a dataflow analysis (named according to the analysis).
  */
-data class DataFlowOutput(val kind: FlowSensitiveAnalysis) : OutputKind() {
+data class DataFlowOutput(val kind: FlowSensitiveAnalysisObj.AnalysisType) : OutputKind() {
     override fun toString(): String = kind.toString()
 }
 
