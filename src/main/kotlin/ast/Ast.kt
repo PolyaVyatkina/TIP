@@ -64,13 +64,13 @@ sealed class AstNode : Product {
      * Unique ID of the node.
      * Every new node object gets a fresh ID (but the ID is ignored in equals tests).
      */
-    val uid: Int
-        get() {
-            AstNodeObj.lastUid += 1
-            return AstNodeObj.lastUid
-        }
+    val uid: Int = AstNodeObj.lastUid+1
 
     abstract val loc: Loc
+
+    init {
+        AstNodeObj.lastUid += 1
+    }
 
 //    override fun toString(): String = "${this.print()}:$loc"
 }
