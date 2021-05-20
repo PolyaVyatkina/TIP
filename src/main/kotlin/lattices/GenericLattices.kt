@@ -1,6 +1,6 @@
 package lattices
 
-import utils.withDefault
+import utils.withDefaultValue
 
 /**
  * A (semi-)lattice.
@@ -126,10 +126,10 @@ class PairLattice<A, L1 : Lattice<A>, B, L2 : Lattice<B>>(val sublattice1: L1, v
 class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L) : Lattice<Map<A, T>> {
     // note: 'ch' isn't used in the class, but having it as a class parameter avoids a lot of type annotations
 
-    override val bottom: Map<A, T> = mutableMapOf<A, T>().withDefault { sublattice.bottom }
+    override val bottom: Map<A, T> = mutableMapOf<A, T>().withDefaultValue(sublattice.bottom)
 
     override fun lub(x: Map<A, T>, y: Map<A, T>): Map<A, T> =
-        x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a]!!, y[a]!!)) }.withDefault { sublattice.bottom }
+        x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a]!!, y[a] ?: x[a]!!)) }.withDefaultValue(sublattice.bottom)
 }
 
 /**
@@ -138,9 +138,9 @@ class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L
 class PowersetLattice<A>(ch: (A) -> Boolean) : Lattice<Set<A>> {
     // note: 'ch' isn't used in the class, but having it as a class parameter avoids a lot of type annotations
 
-    override val bottom: Set<A> = TODO() //<--- Complete here
+    override val bottom: Set<A> = emptySet()
 
-    override fun lub(x: Set<A>, y: Set<A>) = TODO() //<--- Complete here
+    override fun lub(x: Set<A>, y: Set<A>): Set<A> = x union y
 }
 
 /**

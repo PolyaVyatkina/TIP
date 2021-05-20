@@ -50,7 +50,7 @@ abstract class CfgNode {
  * Node in a CFG representing a program statement.
  * The `data` field holds the statement, or in case of if/while instructions, the branch condition.
  */
-data class CfgStmtNode(
+class CfgStmtNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid,
@@ -63,7 +63,7 @@ data class CfgStmtNode(
  * Node in a CFG representing a function call.
  * The `data` field holds the assignment statement where the right-hand-side is the function call.
  */
-data class CfgCallNode(
+class CfgCallNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid,
@@ -76,7 +76,7 @@ data class CfgCallNode(
  * Node in a CFG representing having returned from a function call.
  * The `data` field holds the assignment statement where the right-hand-side is the function call.
  */
-data class CfgAfterCallNode(
+class CfgAfterCallNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid,
@@ -88,7 +88,7 @@ data class CfgAfterCallNode(
 /**
  * Node in a CFG representing the entry of a function.
  */
-data class CfgFunEntryNode(
+class CfgFunEntryNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid,
@@ -100,7 +100,7 @@ data class CfgFunEntryNode(
 /**
  * Node in a CFG representing the exit of a function.
  */
-data class CfgFunExitNode(
+class CfgFunExitNode(
     override val pred: MutableSet<CfgNode> = mutableSetOf(),
     override val succ: MutableSet<CfgNode> = mutableSetOf(),
     override val id: Int = CfgNodeObj.uid,

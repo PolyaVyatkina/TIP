@@ -93,7 +93,7 @@ class RunOption {
 object Tip {
 
     init {
-        Log.defaultLevel = Log.Level.INFO
+        Log.defaultLevel = Log.Level.VERBOSE
     }
 
     val log = Log.logger(this.javaClass)
@@ -171,7 +171,7 @@ object Tip {
             if (options.cfg || options.dfAnalysis.any { p -> p.value != dfo.Disabled && !p.value.interprocedural() }) {
 
                 // generate control-flow graph
-                val wcfg = IntraproceduralProgramCfgObj.generateFromProgram(programNode, declData)
+                val wcfg = IntraproceduralProgramCfgObj.generateFromProgram(programNode)
                 if (options.cfg)
                     Output.output(file, OtherOutput(OutputKindE.CFG), wcfg.toDot({ it.toString() }, { Output.dotIder(it) }), options.out)
 
@@ -209,12 +209,11 @@ object Tip {
                     if (v.interprocedural()) {
                         val an = FlowSensitiveAnalysisObj.select(s, v, wcfg, declData)!!
                         // run the analysis
-                        val res = an.analyze()
-                        val res2 =
+                        val res =
                             if (v.contextsensitive())
-                                Output.transform(res as Map<Pair<CallContext, CfgNode>, *>)
-                            else res
-                        Output.output(file, DataFlowOutput(s), wcfg.toDot({ node -> Output.labeler(res2, node) },
+                                Output.transform(an.analyze() as Map<Pair<CallContext, CfgNode>, *>)
+                            else an.analyze()
+                        Output.output(file, DataFlowOutput(s), wcfg.toDot({ node -> Output.labeler(res, node) },
                             { node -> Output.dotIder(node) }), options.out
                         )
                     }
@@ -263,7 +262,6 @@ fun main(args: Array<String>) {
                                 dfo.valueOf(args[i])
                             } else
                                 dfo.simple
-                    println(options.dfAnalysis)
                 }
                 else -> {
                     tip.log.error("Unrecognized option $s")

@@ -31,25 +31,34 @@ interface IntraprocSignAnalysisFunctions {
     fun localTransfer(n: CfgNode, s: Element): Element {
         NoPointers.assertContainsNode(n.data)
         NoCalls.assertContainsNode(n.data)
-        when (n) {
+        return when (n) {
             is CfgStmtNode -> {
                 when (val d = n.data) {
                     // var declarations
-                    is AVarStmt -> TODO() //<--- Complete here
+                    is AVarStmt -> s + d.declIds.associateWith { FlatLattice.Bot }
                     // assignments
                     is AAssignStmt -> {
                         val l = d.left
-                        val r = d.right
-                        if (l is AUnaryOp<*>) NoPointers.languageRestrictionViolation("${n.data} not allowed")
-                        else if (l is AIdentifier) TODO() //<--- Complete here
+                        val r: AExpr = d.right
+                        when (l) {
+                            is AUnaryOp<*> -> NoPointers.languageRestrictionViolation("${n.data} not allowed")
+                            is AIdentifier ->
+                                when (r) {
+                                    is ACallFuncExpr -> s + (AstNodeWithDeclaration(l, declData).declaration!! to FlatLattice.Bot)
+                                    is ABinaryOp ->  s + (AstNodeWithDeclaration(l, declData).declaration!! to SignLattice.eval(r, s, declData))
+                                    is ANumber -> s + (AstNodeWithDeclaration(l, declData).declaration!! to SignLattice.eval(r, s, declData))
+                                    is AInput -> s + (AstNodeWithDeclaration(l, declData).declaration!! to SignLattice.eval(r, s, declData))
+                                    else -> s + (AstNodeWithDeclaration(l, declData).declaration!! to FlatLattice.Bot)
+                                }
+                            else -> throw IllegalArgumentException()
+                        }
                     }
                     // all others: like no-ops
-                    else -> return s
+                    else -> s
                 }
             }
-            else -> return s
+            else -> s
         }
-        return s //!!!remove this when completed
     }
 }
 
@@ -277,7 +286,7 @@ abstract class SimpleSignAnalysis(val cfg: ProgramCfg, override val declData: De
 /**
  * Base class for sign analysis with lifted lattice.
  */
-abstract class LiftedSignAnalysis(open val cfg: ProgramCfg, declData: DeclarationData) : FlowSensitiveAnalysis<CfgNode, LiftLattice.Lifted<Element>>(cfg),
+abstract class LiftedSignAnalysis(open val cfg: ProgramCfg, override val declData: DeclarationData) : FlowSensitiveAnalysis<CfgNode, LiftLattice.Lifted<Element>>(cfg),
     MapLatticeSolver<CfgNode, LiftLattice.Lifted<Element>>, IntraprocSignAnalysisFunctions, ForwardDependencies {
 
     private val ch: (CfgNode) -> Boolean
@@ -297,7 +306,7 @@ abstract class LiftedSignAnalysis(open val cfg: ProgramCfg, declData: Declaratio
 /**
  * Base class for sign analysis with context sensitivity and lifted lattice.
  */
-abstract class ContextSensitiveSignAnalysis<C : CallContext>(cfg: InterproceduralProgramCfg, declData: DeclarationData) :
+abstract class ContextSensitiveSignAnalysis<C : CallContext>(cfg: InterproceduralProgramCfg,  override val declData: DeclarationData) :
     FlowSensitiveAnalysis<Pair<C, CfgNode>, LiftLattice.Lifted<Element>>(cfg), ContextSensitiveSignAnalysisFunctions<C>, ContextSensitiveForwardDependencies<C> {
 
     // in principle, we should check that the node is in the CFG, but this function is not called anyway...
@@ -319,7 +328,7 @@ class IntraprocSignAnalysisSimpleSolver(cfg: ProgramCfg, override val declData: 
 /**
  * Intraprocedural sign analysis that uses [solvers.SimpleWorklistFixpointSolver].
  */
-class IntraprocSignAnalysisWorklistSolver(cfg: ProgramCfg, declData: DeclarationData) : SimpleSignAnalysis(cfg, declData), SimpleWorklistFixpointSolver<CfgNode, Element> {
+class IntraprocSignAnalysisWorklistSolver(cfg: ProgramCfg,  override val declData: DeclarationData) : SimpleSignAnalysis(cfg, declData), SimpleWorklistFixpointSolver<CfgNode, Element> {
 
     override fun analyze(): Map<CfgNode, Element> = super.analyze()
 }

@@ -43,6 +43,11 @@ object FragmentCfgObj {
                         g.concat(recGen(stmt))
                     }
                 }
+                is ANestedBlockStmt -> {
+                    node.body.fold(seqUnit()) { g, stmt ->
+                        g.concat(recGen(stmt))
+                    }
+                }
                 is AIfStmt -> {
                     val ifGuard = nodeBuilder(CfgStmtNode(data = node))
                     val trueBranch = recGen(node.ifBranch)

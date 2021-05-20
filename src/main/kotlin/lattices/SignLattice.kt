@@ -16,9 +16,9 @@ object SignLattice : FlatLattice<SignElement>(), LatticeOps<FlatLattice.FlatElem
 
     private val signValues: Map<FlatElement, Int> = mapOf(
         Bot to 0,
-        FlatEl(SignElement.Zero) to 1,
-        FlatEl(SignElement.Neg) to 2,
-        FlatEl(SignElement.Pos) to 3,
+        SignElement.Zero to 1,
+        SignElement.Neg to 2,
+        SignElement.Pos to 3,
         Top to 4
     )
 

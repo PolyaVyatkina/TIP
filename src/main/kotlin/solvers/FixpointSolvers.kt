@@ -44,7 +44,7 @@ interface SimpleFixpointSolver<T> : LatticeSolver<T> {
      */
     override fun analyze(): T {
         var x = lattice.bottom
-        var t = x
+        var t: T
         do {
             t = x
             x = function(x)
@@ -82,8 +82,8 @@ interface MapLatticeSolver<N, T> : LatticeSolver<Map<N, T>>, Dependencies<N> {
      * Computes the least upper bound of the incoming elements.
      */
     fun join(n: N, o: Map<N, T>): T {
-        val states = indep(n).map { o[it] }
-        return states.fold(lattice.sublattice.bottom) { acc, pred -> lattice.sublattice.lub(acc, pred!!) }
+        val states = indep(n).map { o[it]!! }
+        return states.fold(lattice.sublattice.bottom) { acc, pred -> lattice.sublattice.lub(acc, pred) }
     }
 }
 

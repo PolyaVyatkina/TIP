@@ -6,6 +6,7 @@ import ast.DeclarationData
 import cfg.CfgNode
 import cfg.FragmentCfg
 import cfg.InterproceduralProgramCfg
+import cfg.IntraproceduralProgramCfg
 import lattices.Lattice
 import lattices.MapLattice
 
@@ -32,24 +33,24 @@ abstract class FlowSensitiveAnalysis<N, T>(cfg: FragmentCfg) : Analysis<Map<N, T
 object FlowSensitiveAnalysisObj {
 
     fun select(kind: AnalysisType, options: AnalysisOption, cfg: FragmentCfg, declData: DeclarationData): FlowSensitiveAnalysis<CfgNode, *>? {
-//        val typedCfg =
-//            if (options == iwli ||
-//                options == iwlip ||
-//                options == csiwlip ||
-//                options == cfiwlip ||
-//                options == ide
-//            )
-//                if (cfg is InterproceduralProgramCfg)
-//                    Right(cfg)
-//                else throw RuntimeException("Whole CFG needed")
-//            else if (cfg is InterproceduralProgramCfg)
-//                Left(cfg)
-//            else throw RuntimeException("Intraprocedural CFG needed")
+        val typedCfg =
+            if (options == iwli ||
+                options == iwlip ||
+                options == csiwlip ||
+                options == cfiwlip ||
+                options == ide
+            )
+                if (cfg is InterproceduralProgramCfg)
+                    cfg
+                else throw RuntimeException("Whole CFG needed")
+            else if (cfg is IntraproceduralProgramCfg)
+                cfg
+            else throw RuntimeException("Intraprocedural CFG needed")
 
         return when (options) {
             Disabled -> null
             simple -> when (kind) {
-//                sign -> IntraprocSignAnalysisSimpleSolver(typedCfg.left.get, declData)
+                sign -> IntraprocSignAnalysisSimpleSolver(typedCfg, declData)
 //                livevars -> LiveVarsAnalysisSimpleSolver(typedCfg.left.get, declData)
 //                available -> AvailableExpAnalysisSimpleSolver(typedCfg.left.get, declData)
 //                vbusy -> VeryBusyExpAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
