@@ -71,7 +71,7 @@ abstract class Mu<A> : Term<A> {
 
     override val fv: Set<Var<A>> by lazy { t.fv - v }
 
-    override fun toString(): String = "mu$v.$t"
+    override fun toString(): String = "\u03BC$v.$t"
 }
 
 /**

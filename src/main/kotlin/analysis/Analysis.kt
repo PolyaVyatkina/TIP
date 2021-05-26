@@ -4,7 +4,7 @@ import ast.ADeclaration
 import ast.AstNode
 
 /**
- * Trait for program analyses.
+ * Interface for program analyses.
  *
  * @tparam R the type of the analysis result
  **/
@@ -17,7 +17,7 @@ interface Analysis<out R> {
 }
 
 /**
- * Trait for (may-)points-to analyses.
+ * Interface for (may-)points-to analyses.
  * Can answer may-points-to and may-alias queries.
  */
 interface PointsToAnalysis : Analysis<Unit> {

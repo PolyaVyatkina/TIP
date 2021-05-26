@@ -8,10 +8,7 @@ object CfgNodeObj {
     var lastUid = 0
 
     val uid: Int
-        get() {
-            lastUid++
-            return lastUid
-        }
+        get() = ++lastUid
 }
 
 /**

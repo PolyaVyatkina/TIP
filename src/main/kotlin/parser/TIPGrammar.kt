@@ -215,18 +215,25 @@ fun main() {
     val grammar = TIPGrammar()
     var success = 0
     var failure = 0
-    File("examples/").walk().forEach { file ->
-        if (file.isFile) {
-            val text = file.readText()
-            grammar.lastBreaks = mutableListOf(0)
-            val res = grammar.tryParseToEnd(text)
-            println("${file.name} – $res")
-            if (res is Parsed) success++
-            else {
-                failure++
-                println(file.name)
-            }
-        }
-    }
-    println("\nSuccess = $success, failure = $failure")
+//    File("examples/").walk().forEach { file ->
+//        if (file.isFile) {
+//            val text = file.readText()
+//            grammar.lastBreaks = mutableListOf(0)
+//            val res = grammar.tryParseToEnd(text)
+//            println("${file.name} – $res")
+//            if (res is Parsed) success++
+//            else {
+//                failure++
+//                println(file.name)
+//            }
+//        }
+//    }
+//    println("\nSuccess = $success, failure = $failure")
+
+    grammar.lastBreaks = mutableListOf(0)
+    val res = grammar.tryParseToEnd("main(i) {\n" +
+            "i = 5 + 1 - 9 * 96;" +
+            "  return i+1;\n" +
+            "}")
+    println(res)
 }

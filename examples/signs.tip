@@ -1,6 +1,6 @@
 fun(x) {
     var y;
-    var k ;
+    var k;
 
     k = 8;
     y = 7;

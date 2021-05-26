@@ -227,6 +227,20 @@ object Tip {
                 Output.output(file, OtherOutput(OutputKindE.TYPES), AstNodeWithType(programNode, typeData).toTypedString(), options.out)
             }
 
+//            // run Andersen analysis, if selected
+//            if (options.andersen) {
+//                val s = AndersenAnalysis(programNode)
+//                s.analyze()
+//                s.pointsTo()
+//            }
+//
+//            // run Steensgaard analysis, if selected
+//            if (options.steensgaard) {
+//                val s = SteensgaardAnalysis(programNode)
+//                s.analyze()
+//                s.pointsTo()
+//            }
+
             // run control-flow analysis, if selected
             if (options.cfa) {
                 val s = ControlFlowAnalysis(programNode, declData)

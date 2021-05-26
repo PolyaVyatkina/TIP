@@ -1,5 +1,7 @@
 package ast
 
+import ast.AstPrinters.EMPTY_PRINTER
+import ast.AstPrinters.print
 import utils.Product
 
 object AstNodeObj {
@@ -64,7 +66,7 @@ sealed class AstNode : Product {
      * Unique ID of the node.
      * Every new node object gets a fresh ID (but the ID is ignored in equals tests).
      */
-    val uid: Int = AstNodeObj.lastUid+1
+    val uid: Int = AstNodeObj.lastUid + 1
 
     abstract val loc: Loc
 
@@ -72,7 +74,7 @@ sealed class AstNode : Product {
         AstNodeObj.lastUid += 1
     }
 
-//    override fun toString(): String = "${this.print()}:$loc"
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
 }
 
 //////////////// Expressions //////////////////////////
@@ -84,23 +86,41 @@ abstract class Assignable<out T> : AExpr()
 interface AAtomicExpr : IAExpr
 abstract class ADeclaration : AstNode()
 
-data class ACallFuncExpr(val targetFun: AExpr, val args: List<AExpr>, val indirect: Boolean, override val loc: Loc) : AExpr()
+data class ACallFuncExpr(val targetFun: AExpr, val args: List<AExpr>, val indirect: Boolean, override val loc: Loc) : AExpr() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AIdentifierDeclaration(val value: String, override val loc: Loc) : ADeclaration()
+data class AIdentifierDeclaration(val value: String, override val loc: Loc) : ADeclaration() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AIdentifier(val value: String, override val loc: Loc) : Assignable<Nothing>(), AAtomicExpr
+data class AIdentifier(val value: String, override val loc: Loc) : Assignable<Nothing>(), AAtomicExpr {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class ABinaryOp(val operator: BinaryOperator, val left: AExpr, val right: AExpr, override val loc: Loc) : AExpr()
+data class ABinaryOp(val operator: BinaryOperator, val left: AExpr, val right: AExpr, override val loc: Loc) : AExpr() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AUnaryOp<out T : UnaryOperator>(val operator: T, val target: AExpr, override val loc: Loc) : Assignable<T>()
+data class AUnaryOp<out T : UnaryOperator>(val operator: T, val target: AExpr, override val loc: Loc) : Assignable<T>() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class ANumber(val value: Int, override val loc: Loc) : AExpr(), AAtomicExpr
+data class ANumber(val value: Int, override val loc: Loc) : AExpr(), AAtomicExpr {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AInput(override val loc: Loc) : AExpr(), AAtomicExpr
+data class AInput(override val loc: Loc) : AExpr(), AAtomicExpr {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AAlloc(override val loc: Loc) : AExpr(), AAtomicExpr
+data class AAlloc(override val loc: Loc) : AExpr(), AAtomicExpr {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class ANull(override val loc: Loc) : AExpr(), AAtomicExpr
+data class ANull(override val loc: Loc) : AExpr(), AAtomicExpr {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
 //////////////// Statements //////////////////////////
 
@@ -112,7 +132,9 @@ abstract class AStmt : AstNode(), IAStmt
  */
 abstract class AStmtInNestedBlock : AStmt()
 
-data class AAssignStmt(val left: Assignable<DerefOp>, val right: AExpr, override val loc: Loc) : AStmtInNestedBlock()
+data class AAssignStmt(val left: Assignable<DerefOp>, val right: AExpr, override val loc: Loc) : AStmtInNestedBlock() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
 interface IABlock : IAStmt {
     val body: List<AStmt>
@@ -127,7 +149,9 @@ abstract class ABlock : AStmt(), IABlock {
 
 }
 
-data class ANestedBlockStmt(override val body: List<AStmtInNestedBlock>, override val loc: Loc) : AStmtInNestedBlock(), IABlock
+data class ANestedBlockStmt(override val body: List<AStmtInNestedBlock>, override val loc: Loc) : AStmtInNestedBlock(), IABlock {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
 data class AFunBlockStmt(val declarations: List<AVarStmt>, val others: List<AStmtInNestedBlock>, val ret: AReturnStmt, override val loc: Loc) : ABlock() {
 
@@ -135,19 +159,33 @@ data class AFunBlockStmt(val declarations: List<AVarStmt>, val others: List<AStm
      * The contents of the block, not partitioned into declarations, others and return
      */
     override val body: List<AStmt> = declarations + (others + ret)
+
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
 }
 
-data class AIfStmt(val guard: AExpr, val ifBranch: AStmtInNestedBlock, val elseBranch: AStmtInNestedBlock?, override val loc: Loc) : AStmtInNestedBlock()
+data class AIfStmt(val guard: AExpr, val ifBranch: AStmtInNestedBlock, val elseBranch: AStmtInNestedBlock?, override val loc: Loc) : AStmtInNestedBlock() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AOutputStmt(val value: AExpr, override val loc: Loc) : AStmtInNestedBlock()
+data class AOutputStmt(val value: AExpr, override val loc: Loc) : AStmtInNestedBlock() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AReturnStmt(val value: AExpr, override val loc: Loc) : AStmt()
+data class AReturnStmt(val value: AExpr, override val loc: Loc) : AStmt() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AErrorStmt(val value: AExpr, override val loc: Loc) : AStmtInNestedBlock()
+data class AErrorStmt(val value: AExpr, override val loc: Loc) : AStmtInNestedBlock() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AVarStmt(val declIds: List<AIdentifierDeclaration>, override val loc: Loc) : AStmt()
+data class AVarStmt(val declIds: List<AIdentifierDeclaration>, override val loc: Loc) : AStmt() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
-data class AWhileStmt(val guard: AExpr, val innerBlock: AStmtInNestedBlock, override val loc: Loc) : AStmtInNestedBlock()
+data class AWhileStmt(val guard: AExpr, val innerBlock: AStmtInNestedBlock, override val loc: Loc) : AStmtInNestedBlock() {
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
+}
 
 //////////////// Program and function ///////////////
 
@@ -161,6 +199,7 @@ data class AProgram(val funs: List<AFunDeclaration>, override val loc: Loc) : As
         return funs.find { it.name == "main" }
     }
 
+    override fun toString(): String = "${this.print { EMPTY_PRINTER }}:$loc"
 }
 
 data class AFunDeclaration(val name: String, val args: List<AIdentifierDeclaration>, val stmts: AFunBlockStmt, override val loc: Loc) : ADeclaration() {

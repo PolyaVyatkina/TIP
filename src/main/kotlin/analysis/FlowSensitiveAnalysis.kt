@@ -51,57 +51,57 @@ object FlowSensitiveAnalysisObj {
             Disabled -> null
             simple -> when (kind) {
                 sign -> IntraprocSignAnalysisSimpleSolver(typedCfg, declData)
-//                livevars -> LiveVarsAnalysisSimpleSolver(typedCfg.left.get, declData)
-//                available -> AvailableExpAnalysisSimpleSolver(typedCfg.left.get, declData)
+                livevars -> LiveVarsAnalysisSimpleSolver(typedCfg as IntraproceduralProgramCfg, declData)
+                available -> AvailableExpAnalysisSimpleSolver(typedCfg as IntraproceduralProgramCfg, declData)
 //                vbusy -> VeryBusyExpAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
 //                reaching -> ReachingDefAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
-//                constprop -> ConstantPropagationAnalysisSimpleSolver(typedCfg.left.get, declData)
+                constprop -> ConstantPropagationAnalysisSimpleSolver(typedCfg as IntraproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             wl -> when (kind) {
-//                sign -> IntraprocSignAnalysisSimpleSolver(typedCfg.left.get, declData)
-//                livevars -> LiveVarsAnalysisSimpleSolver(typedCfg.left.get, declData)
-//                available -> AvailableExpAnalysisSimpleSolver(typedCfg.left.get, declData)
+                sign -> IntraprocSignAnalysisWorklistSolver(typedCfg, declData)
+                livevars -> LiveVarsAnalysisWorklistSolver(typedCfg as IntraproceduralProgramCfg, declData)
+                available -> AvailableExpAnalysisWorklistSolver(typedCfg as IntraproceduralProgramCfg, declData)
 //                vbusy -> VeryBusyExpAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
 //                reaching -> ReachingDefAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
-//                constprop -> ConstantPropagationAnalysisSimpleSolver(typedCfg.left.get, declData)
+                constprop -> ConstantPropagationAnalysisSimpleSolver(typedCfg as IntraproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             wli -> when (kind) {
-//                sign -> IntraprocSignAnalysisWorklistSolverWithInit(typedCfg.left.get, declData)
-//                interval -> IntervalAnalysisWorklistSolverWithInit(typedCfg.left.get, declData)
+                sign -> IntraprocSignAnalysisWorklistSolverWithInit(typedCfg, declData)
+                interval -> IntervalAnalysisWorklistSolverWithInit(typedCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             wliw -> when (kind) {
-//                interval -> IntervalAnalysisWorklistSolverWithWidening(typedCfg.left.get, declData)
+                interval -> IntervalAnalysisWorklistSolverWithWidening(typedCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             wliwn -> when (kind) {
-//                interval -> IntervalAnalysisWorklistSolverWithWideningAndNarrowing(typedCfg.left.get, declData)
+                interval -> IntervalAnalysisWorklistSolverWithWideningAndNarrowing(typedCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             wlip -> when (kind) {
-//                sign -> IntraprocSignAnalysisWorklistSolverWithInitAndPropagation(typedCfg.left.get, declData)
+                sign -> IntraprocSignAnalysisWorklistSolverWithInitAndPropagation(typedCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             iwli -> when (kind) {
-//                sign -> InterprocSignAnalysisWorklistSolverWithInit(typedCfg.right.get, declData)
+                sign -> InterprocSignAnalysisWorklistSolverWithInit(typedCfg as InterproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             iwlip -> when (kind) {
-//                sign -> InterprocSignAnalysisWorklistSolverWithInitAndPropagation(typedCfg.right.get, declData)
+                sign -> InterprocSignAnalysisWorklistSolverWithInitAndPropagation(typedCfg as InterproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             csiwlip -> when (kind) {
-//                sign -> CallStringSignAnalysis(typedCfg.right.get, declData)
+//                sign -> CallStringSignAnalysis(typedCfg as InterproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             cfiwlip -> when (kind) {
-//                sign -> FunctionalSignAnalysis(typedCfg.right.get, declData)
+//                sign -> FunctionalSignAnalysis(typedCfg as InterproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             ide -> when (kind) {
-//                copyconstprop -> CopyConstantPropagationIDEAnalysis(typedCfg.right.get, declData)
+//                copyconstprop -> CopyConstantPropagationIDEAnalysis(typedCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
         }

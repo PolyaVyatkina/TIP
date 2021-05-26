@@ -23,21 +23,24 @@ class AstNodeWithDeclaration(n: AIdentifier, data: DeclarationData) {
     val declaration: ADeclaration? = data[n]
 }
 
+fun AIdentifier.declaration(declData: DeclarationData) = AstNodeWithDeclaration(this, declData).declaration!!
+
 /**
  * Make type data available on AST nodes.
  */
 class AstNodeWithType(val n: AstNode, val data: TypeData) {
     val theType: TipType? = data[n]
 
-    private fun printer(): String = when (n) {
-        is AIdentifierDeclaration -> "${n.value}: ${this.theType ?: "??"}"
-        is AFunDeclaration ->
-            "${n.name}(${n.args.joinToString(",") { it.value }}): " +
-                    "${this.theType ?: "??"}\n${AstNodeWithType(n.stmts, data).printer()}"
-        else -> TODO()
+    private fun printer(): (AstNode) -> String = {
+        when (it) {
+            is AIdentifierDeclaration -> "${it.value}: ${this.theType ?: "??"}"
+            is AFunDeclaration ->
+                "${it.name}(${it.args.joinToString(",") { it.value }}): " +
+                        "${this.theType ?: "??"}\n${AstNodeWithType(it.stmts, data).printer()}"
+            else -> ""
+        }
     }
 
-//    fun toTypedString(): String = n.print(printer())
-    fun toTypedString(): String = ""
+    fun toTypedString(): String = n.print(printer())
 
 }

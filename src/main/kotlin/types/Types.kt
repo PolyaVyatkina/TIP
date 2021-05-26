@@ -87,7 +87,7 @@ data class TipVar(val node: AstNode) : TipType, Var<TipType>() {
  */
 data class TipAlpha(val x: Any) : TipType, Var<TipType>() {
 
-    override fun toString(): String = "alpha<$x>"
+    override fun toString(): String = "\u03B1<$x>"
 }
 
 /**
@@ -98,4 +98,6 @@ data class TipMu(override val v: Var<TipType>, override val t: Term<TipType>) : 
     override fun subst(v: Var<TipType>, t: Term<TipType>): Term<TipType> =
         if (v == this.v) this
         else TipMu(this.v, this.t.subst(v, t))
+
+    override fun toString(): String = super.toString()
 }

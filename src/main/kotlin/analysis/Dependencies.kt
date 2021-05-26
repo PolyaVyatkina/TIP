@@ -49,7 +49,6 @@ interface InterproceduralForwardDependencies : Dependencies<CfgNode> {
 
     val cfg: InterproceduralProgramCfg
 
-
     /**
      * Like [[ForwardDependencies.outdep]] but with call and return edges.
      * A call node has an outdep to its after-call node.

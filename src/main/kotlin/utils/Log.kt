@@ -37,27 +37,22 @@ data class Logger(var tag: String, val level: Log.Level) {
             val color = when (msgLev) {
                 Log.Level.ERROR -> {
                     account -= 9
-                    //Console.BOLD + Console.RED
                     CONSOLE_RED
                 }
                 Log.Level.WARN -> {
-                    account -= 9;
-                    //Console.BOLD + Console.YELLOW
+                    account -= 9
                     CONSOLE_YELLOW
                 }
                 Log.Level.INFO -> {
-                    account -= 9;
-                    //Console.BOLD + Console.BLUE
+                    account -= 9
                     CONSOLE_BLUE
                 }
                 Log.Level.VERBOSE -> {
-                    account -= 9;
-                    //Console.BOLD + Console.BLUE
+                    account -= 9
                     CONSOLE_BLUE
                 }
                 else -> {
-                    account -= 1;
-                    //Console.RESET
+                    account -= 1
                     CONSOLE_RESET
                 }
             }
