@@ -15,28 +15,24 @@ typealias DeclarationData = MutableMap<AIdentifier, ADeclaration>
  */
 typealias TypeData = Map<AstNode, TipType?>
 
-
 /**
  * Make declaration data available on identifier AST nodes.
  */
-class AstNodeWithDeclaration(n: AIdentifier, data: DeclarationData) {
-    val declaration: ADeclaration? = data[n]
-}
-
-fun AIdentifier.declaration(declData: DeclarationData) = AstNodeWithDeclaration(this, declData).declaration!!
+fun AIdentifier.declaration(declData: DeclarationData): ADeclaration = declData[this]!!
 
 /**
  * Make type data available on AST nodes.
  */
+fun AstNode.theType(data: TypeData): TipType? = data[this]
+
 class AstNodeWithType(val n: AstNode, val data: TypeData) {
-    val theType: TipType? = data[n]
 
     private fun printer(): (AstNode) -> String = {
         when (it) {
-            is AIdentifierDeclaration -> "${it.value}: ${this.theType ?: "??"}"
+            is AIdentifierDeclaration -> "${it.value}: ${n.theType(data) ?: "??"}"
             is AFunDeclaration ->
                 "${it.name}(${it.args.joinToString(",") { it.value }}): " +
-                        "${this.theType ?: "??"}\n${AstNodeWithType(it.stmts, data).printer()}"
+                        "${n.theType(data) ?: "??"}\n${AstNodeWithType(it.stmts, data).printer()}"
             else -> ""
         }
     }

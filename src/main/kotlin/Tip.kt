@@ -241,11 +241,6 @@ object Tip {
 //                s.pointsTo()
 //            }
 
-            // run control-flow analysis, if selected
-            if (options.cfa) {
-                val s = ControlFlowAnalysis(programNode, declData)
-                s.analyze()
-            }
         }
         log.info("Success")
     }

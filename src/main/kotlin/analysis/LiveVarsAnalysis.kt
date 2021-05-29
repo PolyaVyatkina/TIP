@@ -1,20 +1,24 @@
 package analysis
 
 import ast.*
+import ast.AstOps.appearingIds
 import cfg.*
+import cfg.CfgOps.appearingIds
 import lattices.IntervalLattice
 import lattices.LiftLattice
 import lattices.MapLattice
 import lattices.PowersetLattice
 import solvers.SimpleMapLatticeFixpointSolver
 import solvers.SimpleWorklistFixpointSolver
+import utils.MapWithDefault
+import utils.withDefaultValue
 
 /**
  * Base class for the live variables analysis
  */
 abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: DeclarationData) : FlowSensitiveAnalysis<CfgNode, Set<ADeclaration>>(cfg) {
 
-    val allVars = cfg.nodes.flatMap { CfgOps.CfgNodeOps(it).appearingIds(declData) }
+    val allVars = cfg.nodes.flatMap { it.appearingIds(declData) }
 
     private val chNodes: (CfgNode) -> Boolean = { cfg.nodes.contains(it) }
     private val chAllVars: (ADeclaration) -> Boolean = { allVars.contains(it) }
@@ -27,35 +31,22 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
             is CfgFunExitNode -> lattice.sublattice.bottom
             is CfgStmtNode ->
                 when (val d = n.data) {
-                    is AExpr -> s union findAllIdentifiers(d).map { it.declaration(declData) }
+                    is AExpr -> s union d.appearingIds(declData)
                     is AAssignStmt -> {
                         val l = d.left
                         if (l is AIdentifier) {
                             s subtract setOf(l.declaration(declData))
-                            s union  findAllIdentifiers(d.right).map { it.declaration(declData) }
+                            s union  d.right.appearingIds(declData)
                             s
                         }
                         else NoPointers.languageRestrictionViolation("$l not allowed")
                     }
                     is AVarStmt -> s subtract d.declIds.toSet()
-                    is AReturnStmt -> s union findAllIdentifiers(d.value).map { it.declaration(declData) }
-                    is AOutputStmt -> s union findAllIdentifiers(d.value).map { it.declaration(declData) }
-
+                    is AReturnStmt -> s union d.value.appearingIds(declData)
+                    is AOutputStmt -> s union d.value.appearingIds(declData)
                     else -> s
             }
             else -> s
-        }
-
-    private fun findAllIdentifiers(n: AExpr): Set<AIdentifier> =
-        when (n) {
-            is ACallFuncExpr -> {
-                val s = setOf<AIdentifier>()
-                n.args.forEach { s + findAllIdentifiers(it) }
-                s
-            }
-            is ABinaryOp -> findAllIdentifiers(n.left) + findAllIdentifiers(n.right)
-            is AIdentifier -> setOf(n)
-            else -> setOf()
         }
 }
 
@@ -64,7 +55,7 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
  */
 class LiveVarsAnalysisSimpleSolver(cfg: IntraproceduralProgramCfg, declData: DeclarationData)
 : LiveVarsAnalysis(cfg, declData), SimpleMapLatticeFixpointSolver<CfgNode, Set<ADeclaration>>, BackwardDependencies {
-    override fun analyze(): Map<CfgNode, Set<ADeclaration>> {
+    override fun analyze(): MapWithDefault<CfgNode, Set<ADeclaration>> {
         return super.analyze()
     }
 }
@@ -74,10 +65,10 @@ class LiveVarsAnalysisSimpleSolver(cfg: IntraproceduralProgramCfg, declData: Dec
  */
 class LiveVarsAnalysisWorklistSolver(cfg: IntraproceduralProgramCfg, declData: DeclarationData)
 : LiveVarsAnalysis(cfg, declData), SimpleWorklistFixpointSolver<CfgNode, Set<ADeclaration>>, BackwardDependencies {
-    override fun analyze(): Map<CfgNode, Set<ADeclaration>> {
+    override fun analyze(): MapWithDefault<CfgNode, Set<ADeclaration>> {
         return super.analyze()
     }
 
-    override var x: Map<CfgNode, Set<ADeclaration>> = mapOf()
+    override var x = mapOf<CfgNode, Set<ADeclaration>>().withDefaultValue(lattice.sublattice.bottom)
     override var worklist: Set<CfgNode> = setOf()
 }

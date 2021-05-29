@@ -2,6 +2,7 @@ package cfg
 
 import analysis.ControlFlowAnalysis
 import ast.*
+import ast.AstOps.containsInvocation
 import utils.withDefaultValue
 import java.lang.IllegalArgumentException
 import javax.lang.model.type.NullType
@@ -21,31 +22,31 @@ object InterproceduralProgramCfgObj {
             is CfgStmtNode ->
                 when (val d = n.data) {
                     is AWhileStmt -> {
-                        assert(!AstOps.AstOp(d.guard).containsInvocation())
+                        assert(!d.guard.containsInvocation())
                         FragmentCfgObj.nodeToGraph(CfgStmtNode(data = d.guard))
                     }
                     is AIfStmt -> {
-                        assert(!AstOps.AstOp(d.guard).containsInvocation())
+                        assert(!d.guard.containsInvocation())
                         FragmentCfgObj.nodeToGraph(CfgStmtNode(data = d.guard))
                     }
                     is AAssignStmt ->
                         when (val r = d.right) {
                             is ACallFuncExpr -> {
                                 assert(
-                                    !AstOps.AstOp(r.targetFun).containsInvocation()
-                                            && r.args.all { !AstOps.AstOp(it).containsInvocation() }
+                                    !r.targetFun.containsInvocation()
+                                            && r.args.all { !it.containsInvocation() }
                                 )
                                 val cnode = CfgCallNode(data = d)
                                 val retnode = CfgAfterCallNode(data = d)
                                 FragmentCfgObj.nodeToGraph(cnode).concat(FragmentCfgObj.nodeToGraph(retnode))
                             }
                             else -> {
-                                assert(!AstOps.AstOp(d).containsInvocation())
+                                assert(!d.containsInvocation())
                                 FragmentCfgObj.nodeToGraph(CfgStmtNode(data = d))
                             }
                         }
                     else -> {
-                        assert(!AstOps.AstOp(n.data).containsInvocation())
+                        assert(!n.data.containsInvocation())
                         FragmentCfgObj.nodeToGraph(CfgStmtNode(data = n.data))
                     }
                 }
@@ -111,7 +112,7 @@ object InterproceduralProgramCfgObj {
         object : DepthFirstAstVisitor<NullType> {
             override fun visit(node: AstNode, arg: NullType?) {
                 if (node is AAssignStmt && node.right is ACallFuncExpr && node.right.targetFun is AIdentifier) {
-                    val decl = AstNodeWithDeclaration(node.right.targetFun, declData).declaration as AFunDeclaration
+                    val decl = node.right.targetFun.declaration(declData) as AFunDeclaration
                     callInfoMap.plus(node to cfaSolution[decl])
                 }
                 else visitChildren(node, arg)

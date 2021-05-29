@@ -64,7 +64,7 @@ object FlowSensitiveAnalysisObj {
                 available -> AvailableExpAnalysisWorklistSolver(typedCfg as IntraproceduralProgramCfg, declData)
 //                vbusy -> VeryBusyExpAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
 //                reaching -> ReachingDefAnalysisSimpleSolver(typedCfg.left.get, declData) //TODO() <--- Complete here
-                constprop -> ConstantPropagationAnalysisSimpleSolver(typedCfg as IntraproceduralProgramCfg, declData)
+                constprop -> ConstantPropagationAnalysisWorklistSolver(typedCfg as IntraproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             wli -> when (kind) {

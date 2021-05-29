@@ -1,5 +1,6 @@
 package lattices
 
+import utils.MapWithDefault
 import utils.withDefaultValue
 
 /**
@@ -123,12 +124,12 @@ class PairLattice<A, L1 : Lattice<A>, B, L2 : Lattice<B>>(val sublattice1: L1, v
  * The set `X` is a subset of `A` and it is defined by the characteristic function `ch`, i.e. `a` is in `X` if and only if `ch(a)` returns true.
  * Bottom is the default value.
  */
-class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L) : Lattice<Map<A, T>> {
+class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L) : Lattice<MapWithDefault<A, T>> {
     // note: 'ch' isn't used in the class, but having it as a class parameter avoids a lot of type annotations
 
-    override val bottom: Map<A, T> = mutableMapOf<A, T>().withDefaultValue(sublattice.bottom)
+    override val bottom: MapWithDefault<A, T> = mutableMapOf<A, T>().withDefaultValue(sublattice.bottom)
 
-    override fun lub(x: Map<A, T>, y: Map<A, T>): Map<A, T> =
+    override fun lub(x: MapWithDefault<A, T>, y: MapWithDefault<A, T>): MapWithDefault<A, T> =
         x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a]!!, y[a] ?: x[a]!!)) }.withDefaultValue(sublattice.bottom)
 }
 

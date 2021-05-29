@@ -2,12 +2,15 @@ package analysis
 
 import ast.*
 import cfg.*
+import cfg.CfgOps.declaredVarsAndParams
 import lattices.*
 import lattices.LiftLattice.Lift
 import lattices.LiftLattice.Lifted
 import solvers.*
+import utils.MapWithDefault
+import utils.withDefaultValue
 
-private typealias Element = Map<ADeclaration, FlatLattice.FlatElement>
+private typealias Element = MapWithDefault<ADeclaration, FlatLattice.FlatElement>
 
 /**
  * Transfer functions for sign analysis (intraprocedural only).
@@ -19,7 +22,7 @@ interface IntraprocSignAnalysisFunctions {
     val domain: Set<CfgNode>
 
     val declaredVars: List<ADeclaration>
-        get() = domain.flatMap { CfgOps.CfgNodeOps(it).declaredVarsAndParams(declData) }
+        get() = domain.flatMap { it.declaredVarsAndParams() }
 
     private val ch: (ADeclaration) -> Boolean
         get() = { declaredVars.contains(it) }
@@ -46,11 +49,11 @@ interface IntraprocSignAnalysisFunctions {
                             is AUnaryOp<*> -> NoPointers.languageRestrictionViolation("${n.data} not allowed")
                             is AIdentifier ->
                                 when (r) {
-                                    is ACallFuncExpr -> s + (AstNodeWithDeclaration(l, declData).declaration!! to FlatLattice.Bot)
-                                    is ABinaryOp -> s + (AstNodeWithDeclaration(l, declData).declaration!! to SignLattice.eval(r, s, declData))
-                                    is ANumber -> s + (AstNodeWithDeclaration(l, declData).declaration!! to SignLattice.eval(r, s, declData))
-                                    is AInput -> s + (AstNodeWithDeclaration(l, declData).declaration!! to SignLattice.eval(r, s, declData))
-                                    else -> s + (AstNodeWithDeclaration(l, declData).declaration!! to FlatLattice.Bot)
+                                    is ACallFuncExpr -> s + (l.declaration(declData) to FlatLattice.Bot)
+                                    is ABinaryOp -> s + (l.declaration(declData) to SignLattice.eval(r, s, declData))
+                                    is ANumber -> s + (l.declaration(declData) to SignLattice.eval(r, s, declData))
+                                    is AInput -> s + (l.declaration(declData) to SignLattice.eval(r, s, declData))
+                                    else -> s + (l.declaration(declData) to FlatLattice.Bot)
                                 }
                             else -> throw IllegalArgumentException()
                         }
@@ -214,7 +217,7 @@ interface ContextSensitiveSignAnalysisFunctions<C : CallContext>
         fun returnflow(exitContext: C, funexit: CfgFunExitNode, callerContext: C, aftercall: CfgAfterCallNode) {
             when (val exit = x[exitContext to funexit]) {
                 is Lift -> {
-                    val newEl = AstNodeWithDeclaration(cfg.AfterCallNodeContainsAssigment(aftercall).targetIdentifier, declData).declaration!! to exit.n[AstOps.returnId]!!
+                    val newEl = cfg.AfterCallNodeContainsAssigment(aftercall).targetIdentifier.declaration(declData) to exit.n[AstOps.returnId]!!
                     val newState = lattice.sublattice.unlift(x[callerContext to aftercall.pred.first()]!!) + newEl
                     propagate(lattice.sublattice.lift(newState), callerContext to aftercall)
                 }
@@ -327,7 +330,7 @@ abstract class ContextSensitiveSignAnalysis<C : CallContext>(cfg: Interprocedura
 class IntraprocSignAnalysisSimpleSolver(cfg: ProgramCfg, override val declData: DeclarationData) :
     SimpleSignAnalysis(cfg),
     SimpleMapLatticeFixpointSolver<CfgNode, Element> {
-    override fun analyze(): Map<CfgNode, Element> = super.analyze()
+    override fun analyze(): MapWithDefault<CfgNode, Element> = super.analyze()
 }
 
 /**
@@ -337,9 +340,9 @@ class IntraprocSignAnalysisWorklistSolver(cfg: ProgramCfg, override val declData
     SimpleSignAnalysis(cfg),
     SimpleWorklistFixpointSolver<CfgNode, Element> {
 
-    override fun analyze(): Map<CfgNode, Element> = super.analyze()
+    override fun analyze(): MapWithDefault<CfgNode, Element> = super.analyze()
     override var worklist: Set<CfgNode> = setOf()
-    override var x: Map<CfgNode, Element> = mapOf()
+    override var x = mapOf<CfgNode, Element>().withDefaultValue(lattice.sublattice.bottom)
 }
 
 /**
@@ -350,11 +353,11 @@ open class IntraprocSignAnalysisWorklistSolverWithInit(cfg: ProgramCfg, override
     LiftedSignAnalysis(cfg),
     WorklistFixpointSolverWithInit<CfgNode, Element> {
 
-    override fun analyze(): Map<CfgNode, Lifted<Element>> = super.analyze()
+    override fun analyze(): MapWithDefault<CfgNode, Lifted<Element>> = super.analyze()
 
     override fun transferUnlifted(n: CfgNode, s: Element): Element = localTransfer(n, s)
     override var worklist: Set<CfgNode> =setOf()
-    override var x: Map<CfgNode, Lifted<Element>> = mapOf()
+    override var x = mapOf<CfgNode, Lifted<Element>>().withDefaultValue(lattice.sublattice.bottom)
 }
 
 /**
@@ -364,7 +367,7 @@ open class IntraprocSignAnalysisWorklistSolverWithInitAndPropagation(cfg: Progra
     IntraprocSignAnalysisWorklistSolverWithInit(cfg, declData),
     WorklistFixpointPropagationSolver<CfgNode, Element> {
 
-    override fun analyze(): Map<CfgNode, Lifted<Element>> = super<WorklistFixpointPropagationSolver>.analyze()
+    override fun analyze(): MapWithDefault<CfgNode, Lifted<Element>> = super<WorklistFixpointPropagationSolver>.analyze()
 }
 
 /**
@@ -411,7 +414,7 @@ class CallStringSignAnalysis(override val cfg: InterproceduralProgramCfg, overri
 
     override val maxCallStringLength = 2; // overriding default from CallStringFunctions
     override var worklist: Set<Pair<CallStringContext, CfgNode>> = setOf()
-    override var x: Map<Pair<CallStringContext, CfgNode>, Lifted<Element>> = mapOf()
+    override var x = mapOf<Pair<CallStringContext, CfgNode>, Lifted<Element>>().withDefaultValue(lattice.sublattice.bottom)
 }
 
 /**
@@ -425,5 +428,5 @@ class FunctionalSignAnalysis(override val cfg: InterproceduralProgramCfg, overri
 
     override val first = setOf<Pair<FunctionalContext, CfgNode>>(initialContext to cfg.funEntries[cfg.program.mainFunction]!!)
     override var worklist: Set<Pair<FunctionalContext, CfgNode>> = setOf()
-    override var x: Map<Pair<FunctionalContext, CfgNode>, Lifted<Element>> = mapOf()
+    override var x = mapOf<Pair<FunctionalContext, CfgNode>, Lifted<Element>>().withDefaultValue(lattice.sublattice.bottom)
 }

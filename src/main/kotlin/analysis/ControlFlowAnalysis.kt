@@ -57,7 +57,7 @@ class ControlFlowAnalysis(val program: AProgram, val declData: DeclarationData) 
          * It returns the node itself, otherwise.
          */
         fun decl(n: AstNode): AstNode =
-            if (n is AIdentifier) AstNodeWithDeclaration(n, declData).declaration!!
+            if (n is AIdentifier) n.declaration(declData)
          else n
 
         fun AstNode.toVar(): AstVariable = AstVariable(this)

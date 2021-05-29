@@ -98,7 +98,7 @@ object SignLattice : FlatLattice<SignElement>(), LatticeOps<FlatLattice.FlatElem
      * Evaluates the expression `exp` in the abstract domain of signs, using `env` as the current environment.
      */
     fun eval(exp: AExpr, env: Map<ADeclaration, FlatElement>, declData: DeclarationData): FlatElement = when (exp) {
-        is AIdentifier -> env[AstNodeWithDeclaration(exp, declData).declaration]!!
+        is AIdentifier -> env[exp.declaration(declData)]!!
         is ANumber -> sign(exp.value)
         is ABinaryOp -> when (exp.operator) {
             Plus -> plus(eval(exp.left, env, declData), eval(exp.right, env, declData))

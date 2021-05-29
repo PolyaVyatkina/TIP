@@ -3,6 +3,9 @@ package utils
 fun <K, V> Map<K, V>.withDefaultValue(default: V) = MapWithDefault(this) { default }
 fun <K, V> Map<K, V>.withDefault(default: (K) -> V) = MapWithDefault(this, default)
 
+operator fun <K,V> MapWithDefault<K, V>.plus(pair: Pair<K, V>): MapWithDefault<K, V> =
+    this.apply { put(pair.first, pair.second) }
+
 class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K, V>, AbstractMap<K, V>() {
 
     private val map = map.toMutableMap()
@@ -11,6 +14,12 @@ class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K
 
     operator fun plus(pair: Pair<K, V>): MapWithDefault<K, V> =
         this.apply { put(pair.first, pair.second) }
+
+    operator fun plus(pairs: Iterable<Pair<K, V>>): MapWithDefault<K, V> =
+        this.apply { putAll(pairs) }
+
+    operator fun plus(map: Map<out K, V>): MapWithDefault<K, V> =
+        this.apply { putAll(map) }
 
     override val size: Int
         get() = this.map.size

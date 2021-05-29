@@ -1,60 +1,60 @@
 package cfg
 
 import ast.*
+import ast.AstOps.appearingConstants
+import ast.AstOps.appearingExpressions
+import ast.AstOps.appearingIds
+import ast.AstOps.declaredLocals
 
 object CfgOps {
+
     /**
-     * A class with convenience methods for operations on CFG nodes.
+     * Returns the set of identifiers declared by the node, including only local variables.
      */
-    class CfgNodeOps(val n: CfgNode) {
+    fun CfgNode.declaredVars(): Set<ADeclaration> =
+        if (this is CfgStmtNode) this.data.declaredLocals()
+        else setOf()
 
-        /**
-         * Returns the set of identifiers declared by the node, including only local variables.
-         */
-        fun declaredVars(declData: DeclarationData): Set<ADeclaration> =
-            if (n is CfgStmtNode) AstOps.AstOp(n.data).declaredLocals()
-            else setOf()
+    /**
+     * Returns the set of identifiers declared by the node, including local variables, function parameters, and function identifiers.
+     */
+    fun CfgNode.declaredVarsAndParams(): Set<ADeclaration> =
+        when (this) {
+            is CfgStmtNode -> this.data.declaredLocals()
+            is CfgFunEntryNode -> this.data.args.toSet() + this.data
+            else -> setOf()
+        }
 
-        /**
-         * Returns the set of identifiers declared by the node, including local variables, function parameters, and function identifiers.
-         */
-        fun declaredVarsAndParams(declData: DeclarationData): Set<ADeclaration> =
-            when (n) {
-                is CfgStmtNode -> AstOps.AstOp(n.data).declaredLocals()
-                is CfgFunEntryNode -> n.data.args.toSet() + n.data
-                else -> setOf()
-            }
+    /**
+     * Returns the set of declarations of the identifiers that appear in the node.
+     */
+    fun CfgNode.appearingIds(declData: DeclarationData): Set<ADeclaration> =
+        if (this is CfgStmtNode) this.data.appearingIds(declData)
+        else setOf()
 
-        /**
-         * Returns the set of declarations of the identifiers that appear in the node.
-         */
-        fun appearingIds(declData: DeclarationData): Set<ADeclaration> =
-            if (n is CfgStmtNode) AstOps.AstOp(n.data).appearingIds(declData)
-            else setOf()
+    /**
+     * Returns the set of expressions that appear in the node.
+     */
+    fun CfgNode.appearingExpressions(): Set<AExpr> =
+        if (this is CfgStmtNode) this.data.appearingExpressions()
+        else setOf()
 
-        /**
-         * Returns the set of expressions that appear in the node.
-         */
-        fun appearingExpressions(): Set<AExpr> =
-            if (n is CfgStmtNode) AstOps.AstOp(n.data).appearingExpressions()
-            else setOf()
-
-        /**
-         * Returns the assignment that appears in the node, if any.
-         */
-        fun appearingAssignments(): AAssignStmt? =
-            if (n is CfgStmtNode) {
-                val d = n.data
-                if (d is AAssignStmt) d
-                else null
-            } else null
+    /**
+     * Returns the assignment that appears in the node, if any.
+     */
+    fun CfgNode.appearingAssignments(): AAssignStmt? =
+        if (this is CfgStmtNode) {
+            val d = this.data
+            if (d is AAssignStmt) d
+            else null
+        } else null
 
 
-        /**
-         * Returns the set of constants appearing in the node, if any.
-         */
-        fun appearingConstants(): Set<ANumber> =
-            if (n is CfgStmtNode) AstOps.AstOp(n.data).appearingConstants()
-            else setOf()
-    }
+    /**
+     * Returns the set of constants appearing in the node, if any.
+     */
+    fun CfgNode.appearingConstants(): Set<ANumber> =
+        if (this is CfgStmtNode) this.data.appearingConstants()
+        else setOf()
+
 }

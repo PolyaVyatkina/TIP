@@ -14,101 +14,95 @@ object AstOps {
     val returnId = AIdentifierDeclaration("#result", Loc(0, 0))
 
     /**
-     * A class with convenience methods for collecting information in AST subtrees.
+     * Checks whether the subtree of the node contains function calls.
      */
-    class AstOp(val n: AstNode) {
-
-        /**
-         * Checks whether the subtree of the node contains function calls.
-         */
-        fun containsInvocation(): Boolean {
-            var found = false
-            val invocationFinder = object : DepthFirstAstVisitor<NullType> {
-                override fun visit(node: AstNode, arg: NullType?) {
-                    if (node is ACallFuncExpr) found = true
-                    else visitChildren(node, null)
-                }
-
+    fun AstNode.containsInvocation(): Boolean {
+        var found = false
+        val invocationFinder = object : DepthFirstAstVisitor<NullType> {
+            override fun visit(node: AstNode, arg: NullType?) {
+                if (node is ACallFuncExpr) found = true
+                else visitChildren(node, null)
             }
-            invocationFinder.visit(n, null)
-            return found
+
         }
+        invocationFinder.visit(this, null)
+        return found
+    }
 
-        /**
-         * Returns the set of local variable identifiers declared by the node (excluding function parameters and function identifiers).
-         */
-        fun declaredLocals(): Set<ADeclaration> =
-            if (n is AVarStmt) n.declIds.toSet()
-            else setOf()
+    /**
+     * Returns the set of local variable identifiers declared by the node (excluding function parameters and function identifiers).
+     */
+    fun AstNode.declaredLocals(): Set<ADeclaration> =
+        if (this is AVarStmt) this.declIds.toSet()
+        else setOf()
 
-        /**
-         * Returns the set of identifier declarations appearing in the subtree of the node.
-         */
-        fun appearingIds(declData: DeclarationData): Set<ADeclaration> {
-            val ids = mutableSetOf<ADeclaration>()
-            val idFinder = object : DepthFirstAstVisitor<NullType> {
-                override fun visit(node: AstNode, arg: NullType?) {
-                    when (node) {
-                        is AIdentifier -> {
-                            val d = AstNodeWithDeclaration(node, declData).declaration
-                            if (d is AIdentifierDeclaration || d is AFunDeclaration) ids += d
-                        }
-                        is AIdentifierDeclaration -> ids += node
-                        is AFunDeclaration -> ids += node
-                        else -> {
-                        }
+    /**
+     * Returns the set of identifier declarations appearing in the subtree of the node.
+     */
+    fun AstNode.appearingIds(declData: DeclarationData): Set<ADeclaration> {
+        val ids = mutableSetOf<ADeclaration>()
+        val idFinder = object : DepthFirstAstVisitor<NullType> {
+            override fun visit(node: AstNode, arg: NullType?) {
+                when (node) {
+                    is AIdentifier -> {
+                        val d = node.declaration(declData)
+                        if (d is AIdentifierDeclaration || d is AFunDeclaration) ids += d
                     }
-                    visitChildren(node, null)
+                    is AIdentifierDeclaration -> ids += node
+                    is AFunDeclaration -> ids += node
+                    else -> {
+                    }
                 }
+                visitChildren(node, null)
             }
-            idFinder.visit(n, null)
-            return ids
         }
+        idFinder.visit(this, null)
+        return ids
+    }
 
-        /**
-         * Returns the set of allocs appearing in the subtree of the node.
-         */
-        fun appearingAllocs(): Set<AAlloc> {
-            val allocs = mutableSetOf<AAlloc>()
-            val allocsFinder = object : DepthFirstAstVisitor<NullType> {
-                override fun visit(node: AstNode, arg: NullType?) {
-                    if (node is AAlloc) allocs += node
-                    else visitChildren(node, null)
-                }
+    /**
+     * Returns the set of allocs appearing in the subtree of the node.
+     */
+    fun AstNode.appearingAllocs(): Set<AAlloc> {
+        val allocs = mutableSetOf<AAlloc>()
+        val allocsFinder = object : DepthFirstAstVisitor<NullType> {
+            override fun visit(node: AstNode, arg: NullType?) {
+                if (node is AAlloc) allocs += node
+                else visitChildren(node, null)
             }
-            allocsFinder.visit(n, null)
-            return allocs
         }
+        allocsFinder.visit(this, null)
+        return allocs
+    }
 
-        /**
-         * Returns the set of constants appearing in the subtree of the node.
-         */
-        fun appearingConstants(): Set<ANumber> {
-            val numbers = mutableSetOf<ANumber>()
-            val numFinder = object : DepthFirstAstVisitor<NullType> {
-                override fun visit(node: AstNode, arg: NullType?) {
-                    if (node is ANumber) numbers += node
-                    else visitChildren(node, null)
-                }
+    /**
+     * Returns the set of constants appearing in the subtree of the node.
+     */
+    fun AstNode.appearingConstants(): Set<ANumber> {
+        val numbers = mutableSetOf<ANumber>()
+        val numFinder = object : DepthFirstAstVisitor<NullType> {
+            override fun visit(node: AstNode, arg: NullType?) {
+                if (node is ANumber) numbers += node
+                else visitChildren(node, null)
             }
-            numFinder.visit(n, null)
-            return numbers
         }
+        numFinder.visit(this, null)
+        return numbers
+    }
 
-        /**
-         * Returns the set of expressions appearing in the subtree of the node.
-         */
-        fun appearingExpressions(): Set<AExpr> {
-            val exps = mutableSetOf<AExpr>()
-            val expFinder = object : DepthFirstAstVisitor<NullType> {
-                override fun visit(node: AstNode, arg: NullType?) {
-                    if (node is ABinaryOp) exps += node
-                    visitChildren(node, null)
-                }
+    /**
+     * Returns the set of expressions appearing in the subtree of the node.
+     */
+    fun AstNode.appearingExpressions(): Set<AExpr> {
+        val exps = mutableSetOf<AExpr>()
+        val expFinder = object : DepthFirstAstVisitor<NullType> {
+            override fun visit(node: AstNode, arg: NullType?) {
+                if (node is ABinaryOp) exps += node
+                visitChildren(node, null)
             }
-            expFinder.visit(n, null)
-            return exps
         }
+        expFinder.visit(this, null)
+        return exps
     }
 
     /**
@@ -132,7 +126,7 @@ object AstOps {
             when (other) {
                 is UnlabelledNode<*> -> {
                     if (this.n is AIdentifier && other.n is AIdentifier)
-                        AstNodeWithDeclaration(this.n, declData).declaration == AstNodeWithDeclaration(other.n, declData).declaration
+                        this.n.declaration(declData) == other.n.declaration(declData)
                     else {
                         if (this.javaClass != n.javaClass)
                             false
@@ -151,7 +145,7 @@ object AstOps {
             }
 
         override fun hashCode(): Int = nonLocMembers.map {
-            if (it is AIdentifier) AstNodeWithDeclaration(it, declData).declaration.hashCode()
+            if (it is AIdentifier) it.declaration(declData).hashCode()
             else it.hashCode()
         }.fold(n.javaClass.hashCode()) { m, el -> m * el }
 
