@@ -146,7 +146,7 @@ interface InterprocSignAnalysisFunctionsWithPropagation
         fun returnFlow(funexit: CfgFunExitNode, aftercall: CfgAfterCallNode) {
             when (val exit = x[funexit]) {
                 is Lift<Element> -> {
-                    val newState = lattice.sublattice.unlift(x[aftercall.pred.first()]!!) +
+                    val newState = lattice.sublattice.unlift(x[aftercall.pred.first()]) +
                             (cfg.AfterCallNodeContainsAssigment(aftercall).targetIdentifier.declaration(declData) to exit.n[AstOps.returnId]!!)
                     propagate(lattice.sublattice.lift(newState), aftercall)
                 }
@@ -208,8 +208,7 @@ interface ContextSensitiveSignAnalysisFunctions<C : CallContext>
     /**
      * Collect (reverse) call edges, such that we don't have to search through the global lattice element to find the relevant call contexts.
      */
-    val returnEdges: HashMap<Pair<C, CfgFunExitNode>, Set<Pair<C, CfgAfterCallNode>>>
-        get() = hashMapOf()
+    val returnEdges: HashMap<Pair<C, CfgFunExitNode>, MutableSet<Pair<C, CfgAfterCallNode>>>
 
     override fun transferUnlifted(n: Pair<C, CfgNode>, s: Element): Element {
 
@@ -238,7 +237,7 @@ interface ContextSensitiveSignAnalysisFunctions<C : CallContext>
                     // record the (reverse) call edge, and make sure existing return flow gets propagated
                     val exit = cfg.IpNodeInfoEntry(entry).exit
                     val afterCall = cfg.IpNodeInfoCall(node).afterCallNode
-                    returnEdges[newContext to exit]!! + (currentContext to afterCall)
+                    returnEdges[newContext to exit]?.plusAssign((currentContext to afterCall))
                     returnflow(newContext, exit, currentContext, afterCall)
                 }
                 lattice.sublattice.sublattice.bottom // no successors for this kind of node, but we have to return something
@@ -246,7 +245,8 @@ interface ContextSensitiveSignAnalysisFunctions<C : CallContext>
 
             // function exit nodes
             is CfgFunExitNode -> {
-                returnEdges[currentContext to node]!!.forEach {
+                if (returnEdges[currentContext to node] != null)
+                    returnEdges[currentContext to node]!!.forEach {
                     returnflow(currentContext, node, it.first, it.second)
                 }
                 lattice.sublattice.sublattice.bottom // no successors for this kind of node, but we have to return something
@@ -254,8 +254,10 @@ interface ContextSensitiveSignAnalysisFunctions<C : CallContext>
 
             // return statement
             is CfgStmtNode -> {
-                val ret = node.data as AReturnStmt
-                s + (AstOps.returnId to lattice.sublattice.sublattice.sublattice.eval(ret.value, s, declData))
+                val d = node.data
+                if (d is AReturnStmt)
+                    s + (AstOps.returnId to lattice.sublattice.sublattice.sublattice.eval(d.value, s, declData))
+                else localTransfer(node, s)
             }
 
             // function entry nodes (like no-op here)
@@ -378,7 +380,7 @@ class InterprocSignAnalysisWorklistSolverWithInit(override val cfg: Interprocedu
     InterprocSignAnalysisFunctions,
     InterproceduralForwardDependencies {
 
-    override val first = setOf<CfgNode>(cfg.funEntries[cfg.program.mainFunction]!!)
+    override val first = setOf<CfgNode>(cfg.funEntries[cfg.program.mainFunction()]!!)
     override fun funsub(n: CfgNode, x: Map<CfgNode, Lifted<Element>>): Lifted<Element> =
         super<InterprocSignAnalysisFunctions>.funsub(n, x)
 
@@ -398,7 +400,7 @@ class InterprocSignAnalysisWorklistSolverWithInitAndPropagation(override val cfg
     ForwardDependencies {
 
     override fun transferUnlifted(n: CfgNode, s: Element): Element = super<InterprocSignAnalysisFunctionsWithPropagation>.transferUnlifted(n, s)
-    override val first = setOf<CfgNode>(cfg.funEntries[cfg.program.mainFunction]!!)
+    override val first = setOf<CfgNode>(cfg.funEntries[cfg.program.mainFunction()]!!)
 }
 
 /**
@@ -410,9 +412,13 @@ class CallStringSignAnalysis(override val cfg: InterproceduralProgramCfg, overri
 
     override val init = Lift(lattice.sublattice.sublattice.bottom)
 
-    override val first = setOf<Pair<CallStringContext, CfgNode>>(initialContext to cfg.funEntries[cfg.program.mainFunction]!!)
+    override val first = setOf<Pair<CallStringContext, CfgNode>>(initialContext to cfg.funEntries[cfg.program.mainFunction()]!!)
 
     override val maxCallStringLength = 2; // overriding default from CallStringFunctions
+
+    override val returnEdges =
+        hashMapOf<Pair<CallStringContext, CfgFunExitNode>, MutableSet<Pair<CallStringContext, CfgAfterCallNode>>>()
+
     override var worklist: Set<Pair<CallStringContext, CfgNode>> = setOf()
     override var x = mapOf<Pair<CallStringContext, CfgNode>, Lifted<Element>>().withDefaultValue(lattice.sublattice.bottom)
 }
@@ -426,7 +432,11 @@ class FunctionalSignAnalysis(override val cfg: InterproceduralProgramCfg, overri
 
     override val init = Lift(lattice.sublattice.sublattice.bottom)
 
-    override val first = setOf<Pair<FunctionalContext, CfgNode>>(initialContext to cfg.funEntries[cfg.program.mainFunction]!!)
+    override val first = setOf<Pair<FunctionalContext, CfgNode>>(initialContext to cfg.funEntries[cfg.program.mainFunction()]!!)
+
+    override val returnEdges =
+        hashMapOf<Pair<FunctionalContext, CfgFunExitNode>, MutableSet<Pair<FunctionalContext, CfgAfterCallNode>>>()
+
     override var worklist: Set<Pair<FunctionalContext, CfgNode>> = setOf()
     override var x = mapOf<Pair<FunctionalContext, CfgNode>, Lifted<Element>>().withDefaultValue(lattice.sublattice.bottom)
 }

@@ -1,9 +1,9 @@
 package solvers
 
 /**
- * A generic term: a variable [[Var]], a constructor [[Cons]], or a recursive term [[Mu]].
+ * A generic term: a variable [Var], a constructor [Cons], or a recursive term [Mu].
  *
- * @tparam A type parameter describing the kind of constraint system
+ * @param A type parameter describing the kind of constraint system
  */
 
 interface Term<A> {
@@ -54,8 +54,8 @@ abstract class Cons<A> : Term<A> {
 
 /**
  * Recursive term.
- * Whenever a term is such that v = t[v] where v appears free in t[v], then we represent it finitely as \u03bc v. t[v].
- * v is a binder in the term, and the copy rule holds: \u03bc v. t[v] == t [ \u03bc v. t[v] ]
+ * Whenever a term is such that v = t[v] where v appears free in t[v], then we represent it finitely as \u03BC v. t[v].
+ * v is a binder in the term, and the copy rule holds: \u03BC v. t[v] == t [ \u03BC v. t[v] ]
  */
 abstract class Mu<A> : Term<A> {
 
@@ -80,7 +80,7 @@ abstract class Mu<A> : Term<A> {
 abstract class TermOps<A> {
 
     /**
-     * Constructor for [[tip.solvers.Mu]] terms.
+     * Constructor for [Mu] terms.
      */
     abstract fun makeMu(v: Var<A>, t: Term<A>): Mu<A>
 
@@ -92,7 +92,7 @@ abstract class TermOps<A> {
 
     /**
      * Closes the term by replacing each free variable with its value in the given environment.
-     * Whenever a recursive type is detected, a [[Mu]] term is generated.
+     * Whenever a recursive type is detected, a [Mu] term is generated.
      * Remaining free variables are replaced by fresh variables that are implicitly universally quantified.
      *
      * @param t       the term to close
@@ -102,7 +102,7 @@ abstract class TermOps<A> {
 
     /**
      * Closes the term by replacing each variable that appears as a subterm of with its value in the given environment.
-     * Whenever a recursive type is detected, a [[Mu]] term is generated.
+     * Whenever a recursive type is detected, a [Mu] term is generated.
      *
      * @param t       the term to close
      * @param env     environment, map from variables to terms

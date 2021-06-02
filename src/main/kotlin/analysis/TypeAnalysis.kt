@@ -10,8 +10,8 @@ import javax.lang.model.type.NullType
 
 /**
  * Unification-based type analysis.
- * The analysis associates a [[types.TipType]] with each variable declaration and expression node in the AST.
- * It is implemented using [[solvers.UnionFindSolver]].
+ * The analysis associates a [types.TipType] with each variable declaration and expression node in the AST.
+ * It is implemented using [solvers.UnionFindSolver].
  */
 class TypeAnalysis(val program: AProgram, val declData: DeclarationData) : DepthFirstAstVisitor<NullType>, Analysis<TypeData> {
 

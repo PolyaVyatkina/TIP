@@ -108,13 +108,14 @@ interface SimpleMapLatticeFixpointSolver<N, T> : SimpleFixpointSolver<MapWithDef
     override fun function(x: MapWithDefault<N, T>): MapWithDefault<N, T> {
         FixpointSolvers.log.verb("In state $x")
         return domain.fold(lattice.bottom) { m, a ->
+            FixpointSolvers.log.verb("Processing $a")
             m.plus(a to funsub(a, x))
         }
     }
 }
 
 /**
- * Base trait for solvers for map lattices with lifted co-domains.
+ * Base interface for solvers for map lattices with lifted co-domains.
  * @tparam N type of the elements in the map domain.
  */
 interface MapLiftLatticeSolver<N, T> : MapLatticeSolver<N, Lifted<T>>, Dependencies<N> {
@@ -130,8 +131,7 @@ interface MapLiftLatticeSolver<N, T> : MapLatticeSolver<N, Lifted<T>>, Dependenc
         when (s) {
             is Bottom<T> -> Bottom()
             is Lift<T> -> {
-                val sub: LiftLattice<T, Lattice<T>> = lattice.sublattice
-                sub.lift(transferUnlifted(n, s.n))
+                lattice.sublattice.lift(transferUnlifted(n, s.n))
             }
             else -> throw IllegalArgumentException()
         }
@@ -145,7 +145,7 @@ interface MapLiftLatticeSolver<N, T> : MapLatticeSolver<N, Lifted<T>>, Dependenc
 interface Worklist<N> {
 
     /**
-     * Called by [[run]] to process an item from the worklist.
+     * Called by [run] to process an item from the worklist.
      */
     fun process(n: N)
 
@@ -213,10 +213,7 @@ interface WorklistFixpointSolver<N, T> : MapLatticeSolver<N, T>, ListSetWorklist
         FixpointSolvers.log.verb("Processing $n in state $xn")
         val y = funsub(n, x)
         if (y != xn) {
-            x = if (x is MapWithDefault) {
-                val def = (x as MapWithDefault<N, T>).default
-                (x + (n to y)).withDefault(def)
-            } else x + (n to y)
+            x + (n to y)
             add(outdep(n))
         }
     }
@@ -322,7 +319,7 @@ interface WorklistFixpointPropagationSolver<N, T> : WorklistFixpointSolverWithIn
         get() = lattice.sublattice.lift(lattice.sublattice.sublattice.bottom)
 
     /**
-     * This method overrides the one from [[WorklistFixpointSolver]].
+     * This method overrides the one from [WorklistFixpointSolver].
      * Called by the worklist solver when a node is visited.
      */
     override fun process(n: N) {

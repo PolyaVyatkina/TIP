@@ -130,7 +130,7 @@ class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L
     override val bottom: MapWithDefault<A, T> = mutableMapOf<A, T>().withDefaultValue(sublattice.bottom)
 
     override fun lub(x: MapWithDefault<A, T>, y: MapWithDefault<A, T>): MapWithDefault<A, T> =
-        x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a]!!, y[a] ?: x[a]!!)) }.withDefaultValue(sublattice.bottom)
+        x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a], y[a])) }.withDefaultValue(sublattice.bottom)
 }
 
 /**

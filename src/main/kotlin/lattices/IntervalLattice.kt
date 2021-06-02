@@ -1,6 +1,8 @@
 package lattices
 
-import java.lang.IllegalArgumentException
+import kotlin.IllegalArgumentException
+import kotlin.math.max
+import kotlin.math.min
 
 private typealias Element = Pair<IntervalLattice.Num, IntervalLattice.Num>
 
@@ -28,13 +30,23 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
         x == FullInterval -> FullInterval
         x == EmptyInterval -> y
         x.first is MInf && y.second is PInf -> FullInterval
-        x.first is MInf && x.second is IntNum && y.second is IntNum ->
-            MInf to IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
-        x.first is IntNum && x.second is PInf && y.first is IntNum ->
-            IntNum(kotlin.math.min((x.first as IntNum).i, (y.first as IntNum).i)) to PInf
-        x.first is IntNum && x.second is IntNum && y.first is IntNum && y.second is IntNum ->
-            IntNum((x.first as IntNum).i.coerceAtMost((y.first as IntNum).i)) to
-                    IntNum((x.second as IntNum).i.coerceAtLeast((y.second as IntNum).i))
+        x.first is MInf && x.second is IntNum && y.second is IntNum -> {
+            val h1 = (x.second as IntNum).i
+            val h2 = (y.second as IntNum).i
+            MInf to IntNum(max(h1, h2))
+        }
+        x.first is IntNum && x.second is PInf && y.first is IntNum -> {
+            val l1 = (x.first as IntNum).i
+            val l2 = (y.first as IntNum).i
+            IntNum(min(l1, l2)) to PInf
+        }
+        x.first is IntNum && x.second is IntNum && y.first is IntNum && y.second is IntNum ->{
+            val l1 = (x.first as IntNum).i
+            val l2 = (y.first as IntNum).i
+            val h1 = (x.second as IntNum).i
+            val h2 = (y.second as IntNum).i
+            IntNum(min(l1, l2)) to IntNum(max(h1, h2))
+        }
         else -> lub(y, x)
     }
 
@@ -72,13 +84,13 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
         val low =
             if (b.first is MInf || a.first is MInf) MInf
             else if (b.first is PInf || a.first is PInf) PInf
-            else if (b.first is IntNum && a.first is IntNum) IntNum((a.first as IntNum).i + (b.first as IntNum).i)
-            else MInf
+            else if (a.first is IntNum && b.first is IntNum) IntNum((a.first as IntNum).i + (b.first as IntNum).i)
+            else throw IllegalArgumentException()
         val high =
-            if (b.second is MInf || a.second is MInf) MInf
-            else if (b.second is PInf || a.second is PInf) PInf
-            else if (b.second is IntNum && a.second is IntNum) IntNum((a.second as IntNum).i + (b.second as IntNum).i)
-            else MInf
+            if (b.second is PInf || a.second is PInf) PInf
+            else if (b.second is MInf || a.second is MInf) MInf
+            else if (a.second is IntNum && b.second is IntNum) IntNum((a.second as IntNum).i + (b.second as IntNum).i)
+            else throw IllegalArgumentException()
         return low to high
     }
 
@@ -114,7 +126,7 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
                     a is PInf -> b
                     b is PInf -> a
                     a is MInf || b is MInf -> MInf
-                    a is IntNum && b is IntNum -> IntNum(kotlin.math.min(a.i, b.i))
+                    a is IntNum && b is IntNum -> IntNum(min(a.i, b.i))
                     else -> throw IllegalArgumentException()
                 }
             }
@@ -131,7 +143,7 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
                     a is PInf || b is PInf -> PInf
                     b is MInf -> a
                     a is MInf -> b
-                    a is IntNum && b is IntNum -> IntNum(kotlin.math.max(a.i, b.i))
+                    a is IntNum && b is IntNum -> IntNum(max(a.i, b.i))
                     else -> throw IllegalArgumentException()
                 }
             }
@@ -224,10 +236,10 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
         b.first is IntNum && b.second is PInf -> MInf to IntNum(-(b.first as IntNum).i)
         b.first is MInf && b.second is IntNum -> IntNum(-(b.second as IntNum).i) to PInf
         b.first is IntNum && b.second is IntNum -> {
-            val h = (b.first as IntNum).i
-            val l = (b.second as IntNum).i
-            IntNum(kotlin.math.min(-h, -l)) to
-                    IntNum(kotlin.math.max(-h, -l))
+            val l = (b.first as IntNum).i
+            val h = (b.second as IntNum).i
+            IntNum(min(-h, -l)) to
+                    IntNum(max(-h, -l))
         }
         else -> throw IllegalArgumentException()
     }
@@ -241,8 +253,8 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
         b == FullInterval -> FullInterval
         a.first is IntNum && a.second is IntNum && b.first is IntNum && b.second is IntNum -> {
             val l1 = (a.first as IntNum).i
-            val l2 = (a.second as IntNum).i
-            val h1 = (b.first as IntNum).i
+            val h1 = (a.second as IntNum).i
+            val l2 = (b.first as IntNum).i
             val h2 = (b.second as IntNum).i
             if (l1 == h1 && h1 == l2 && l2 == h2) IntNum(1) to IntNum(1)
             else IntNum(0) to IntNum(1)
@@ -258,12 +270,14 @@ class IntervalLattice : Lattice<Element>, LatticeOps<Element> {
         b == FullInterval -> FullInterval
         a.first is IntNum && a.second is IntNum && b.first is IntNum && b.second is IntNum -> {
             val l1 = (a.first as IntNum).i
-            val l2 = (a.second as IntNum).i
-            val h1 = (b.first as IntNum).i
+            val h1 = (a.second as IntNum).i
+            val l2 = (b.first as IntNum).i
             val h2 = (b.second as IntNum).i
-            if (h1 < l2) IntNum(1) to IntNum(1)
-            else if (h2 < l1) IntNum(0) to IntNum(0)
-            else IntNum(0) to IntNum(1)
+            when {
+                h1 < l2 -> IntNum(1) to IntNum(1)
+                h2 < l1 -> IntNum(0) to IntNum(0)
+                else -> IntNum(0) to IntNum(1)
+            }
         }
         else -> IntNum(0) to IntNum(1)
     }

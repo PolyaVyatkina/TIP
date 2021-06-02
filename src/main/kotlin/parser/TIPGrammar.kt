@@ -186,10 +186,11 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
 
     val funActualArgs by -wspStr(leftParen) and separatedTerms(expression, comma, acceptZero = true) and -wspStr(rightParen)
 
-    val funApp: Parser<AExpr> by (Cursor * parens * funActualArgs) or (Cursor * identifier * funActualArgs) map { (cur, id, args) ->
-        if (id == parens) ACallFuncExpr(id, args, true, offset2Loc(cur))
-        else ACallFuncExpr(id, args, false, offset2Loc(cur))
-    }
+    val funApp: Parser<AExpr> by ((Cursor * parens * funActualArgs) map { (cur, id, args) ->
+        ACallFuncExpr(id, args, true, offset2Loc(cur))
+    }) or ((Cursor * identifier * funActualArgs) map { (cur, id, args) ->
+        ACallFuncExpr(id, args, false, offset2Loc(cur))
+    })
 
     val statement: Parser<AStmtInNestedBlock> by outputParser or assignment or block or whileParser or ifParser or errorParser
 
@@ -219,7 +220,14 @@ fun main() {
 //        if (file.isFile) {
 //            val text = file.readText()
 //            grammar.lastBreaks = mutableListOf(0)
-//            val res = grammar.tryParseToEnd(text)
+//            try {
+//                val res = grammar.tryParseToEnd(text)
+//                success++
+//            } catch (e: Exception) {
+//                println(file.name)
+//                println(e)
+//                failure++
+//            }
 //            println("${file.name} – $res")
 //            if (res is Parsed) success++
 //            else {
@@ -231,9 +239,12 @@ fun main() {
 //    println("\nSuccess = $success, failure = $failure")
 
     grammar.lastBreaks = mutableListOf(0)
-    val res = grammar.tryParseToEnd("main(i) {\n" +
-            "i = 5 + 1 - 9 * 96;" +
-            "  return i+1;\n" +
+    val res = grammar.tryParseToEnd("test(f,a){\n" +
+            "    return (*f)(a);\n" +
+            "}\n" +
+            "\n" +
+            "test2(g,b){\n" +
+            "    return (*g)(b);\n" +
             "}")
     println(res)
 }

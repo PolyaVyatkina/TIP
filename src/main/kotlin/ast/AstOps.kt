@@ -128,10 +128,10 @@ object AstOps {
                     if (this.n is AIdentifier && other.n is AIdentifier)
                         this.n.declaration(declData) == other.n.declaration(declData)
                     else {
-                        if (this.javaClass != n.javaClass)
+                        if (this.javaClass != other.javaClass)
                             false
                         else {
-                            this.nonLocMembers.zip(UnlabelledNode(n, declData).nonLocMembers).fold(true) { a, p ->
+                            this.nonLocMembers.zip(other.nonLocMembers).fold(true) { a, p ->
                                 if (p.first is AstNode && p.second is AstNode) {
                                     val p1 = UnlabelledNode(p.first as AstNode, declData)
                                     val p2 = UnlabelledNode(p.second as AstNode, declData)
@@ -144,7 +144,15 @@ object AstOps {
                 else -> false
             }
 
-        override fun hashCode(): Int = nonLocMembers.map {
+        override fun hashCode(): Int =
+
+//            n.javaClass.hashCode() * (
+//                nonLocMembers.map {
+//                    if (it is AIdentifier) it.declaration(declData).hashCode()
+//                    else it.hashCode()
+//                }
+
+            nonLocMembers.map {
             if (it is AIdentifier) it.declaration(declData).hashCode()
             else it.hashCode()
         }.fold(n.javaClass.hashCode()) { m, el -> m * el }

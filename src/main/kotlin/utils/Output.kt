@@ -21,6 +21,7 @@ object Output {
      * @param outFolder the output directory
      */
     fun output(file: File, kind: OutputKind, content: String, outFolder: File) {
+        println(content)
         val extension = when (kind) {
             OtherOutput(OutputKindE.CFG) -> "_cfg.dot"
             OtherOutput(OutputKindE.ICFG) -> "_icfg.dot"

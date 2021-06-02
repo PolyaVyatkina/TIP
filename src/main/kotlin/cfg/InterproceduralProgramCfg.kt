@@ -143,17 +143,12 @@ class InterproceduralProgramCfg(
     val declData: DeclarationData
                                 ) : ProgramCfg(program, funEntries, funExits) {
 
-    init {
-        // Check the calls are normalized
-        NormalizedCalls(declData).assertContainsProgram(program)
-        initdeps()
-    }
     val graph = this
 
     /**
      * The node corresponding to entry of the main function.
      */
-    val programEntry = funEntries[program.mainFunction]
+    val programEntry = funEntries[program.mainFunction()]
 
     /**
      * Map from [[cfg.CfgFunEntryNode]] to the set of [[cfg.CfgCallNode]]s calling the function.
@@ -212,6 +207,11 @@ class InterproceduralProgramCfg(
     private val functionNodes: Map<CfgFunEntryNode, Set<CfgNode>> =
         funEntries.values.associateWith { entry -> nodesRec(entry).toSet() }
 
+    init {
+        // Check the calls are normalized
+        NormalizedCalls(declData).assertContainsProgram(program)
+        initdeps()
+    }
 
     /**
      * A class with convenience methods for CFG entry node operations that involve the whole-program CFG.

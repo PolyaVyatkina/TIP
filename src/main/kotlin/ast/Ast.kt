@@ -60,15 +60,15 @@ interface IAstNode : Product {
 /**
  * AST node.
  */
-sealed class AstNode : Product {
+sealed class AstNode : IAstNode, Product {
 
     /**
      * Unique ID of the node.
      * Every new node object gets a fresh ID (but the ID is ignored in equals tests).
      */
-    val uid: Int = AstNodeObj.lastUid + 1
+    override val uid: Int = AstNodeObj.lastUid + 1
 
-    abstract val loc: Loc
+    abstract override val loc: Loc
 
     init {
         AstNodeObj.lastUid += 1
@@ -191,7 +191,7 @@ data class AWhileStmt(val guard: AExpr, val innerBlock: AStmtInNestedBlock, over
 
 data class AProgram(val funs: List<AFunDeclaration>, override val loc: Loc) : AstNode() {
 
-    val mainFunction: AFunDeclaration = findMainFunction() ?: throw RuntimeException("Missing main function, declared functions are $funs")
+    fun mainFunction(): AFunDeclaration = findMainFunction() ?: throw RuntimeException("Missing main function, declared functions are $funs")
 
     fun hasMainFunction(): Boolean = findMainFunction() != null
 

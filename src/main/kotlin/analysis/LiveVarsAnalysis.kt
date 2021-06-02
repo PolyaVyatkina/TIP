@@ -35,9 +35,7 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
                     is AAssignStmt -> {
                         val l = d.left
                         if (l is AIdentifier) {
-                            s subtract setOf(l.declaration(declData))
-                            s union  d.right.appearingIds(declData)
-                            s
+                            s - l.declaration(declData) + d.right.appearingIds(declData)
                         }
                         else NoPointers.languageRestrictionViolation("$l not allowed")
                     }

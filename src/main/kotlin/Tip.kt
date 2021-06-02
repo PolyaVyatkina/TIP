@@ -191,11 +191,12 @@ object Tip {
             if (options.icfg || options.dfAnalysis.any { p -> p.value != dfo.Disabled && p.value.interprocedural() }) {
 
                 // generate control-flow graph
-                val wcfg = if (options.cfa) {
+                /*val wcfg = if (options.cfa) {
                     InterproceduralProgramCfgObj.generateFromProgramWithCfa(programNode, declData)
                 } else {
                     InterproceduralProgramCfgObj.generateFromProgram(programNode, declData)
-                }
+                }*/
+                val wcfg = InterproceduralProgramCfgObj.generateFromProgram(programNode, declData)
 
                 if (options.icfg) {
                     Output.output(file, OtherOutput(OutputKindE.ICFG), wcfg.toDot({ x ->
@@ -222,7 +223,6 @@ object Tip {
 
             // run type analysis, if selected
             if (options.types) {
-                // (for information about the use of 'implicit', see [[tip.analysis.TypeAnalysis]])
                 val typeData: TypeData = TypeAnalysis(programNode, declData).analyze()
                 Output.output(file, OtherOutput(OutputKindE.TYPES), AstNodeWithType(programNode, typeData).toTypedString(), options.out)
             }

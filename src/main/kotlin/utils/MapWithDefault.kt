@@ -13,13 +13,13 @@ class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K
     override operator fun get(key: K): V = this.map[key] ?: default(key)
 
     operator fun plus(pair: Pair<K, V>): MapWithDefault<K, V> =
-        this.apply { put(pair.first, pair.second) }
+        this.apply { put(pair.first, pair.second) }.toMap().withDefault(default)
 
     operator fun plus(pairs: Iterable<Pair<K, V>>): MapWithDefault<K, V> =
-        this.apply { putAll(pairs) }
+        this.apply { putAll(pairs) }.toMap().withDefault(default)
 
     operator fun plus(map: Map<out K, V>): MapWithDefault<K, V> =
-        this.apply { putAll(map) }
+        this.apply { putAll(map) }.toMap().withDefault(default)
 
     override val size: Int
         get() = this.map.size
@@ -47,4 +47,15 @@ class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K
 
     override fun remove(key: K): V? = this.map.remove(key)
 
+//    override fun equals(other: Any?): Boolean {
+//        if (other === this) return true
+//        if (other !is Map<*, *>) return false
+//        if (size != other.size) return false
+//
+//        for (key in keys)
+//            if (other[key] != this[key])
+//                return false
+//
+//        return true
+//    }
 }
