@@ -31,7 +31,7 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
             is CfgFunExitNode -> lattice.sublattice.bottom
             is CfgStmtNode ->
                 when (val d = n.data) {
-                    is AExpr -> s union d.appearingIds(declData)
+                    is AExpr -> s + d.appearingIds(declData)
                     is AAssignStmt -> {
                         val l = d.left
                         if (l is AIdentifier) {
@@ -39,9 +39,9 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
                         }
                         else NoPointers.languageRestrictionViolation("$l not allowed")
                     }
-                    is AVarStmt -> s subtract d.declIds.toSet()
-                    is AReturnStmt -> s union d.value.appearingIds(declData)
-                    is AOutputStmt -> s union d.value.appearingIds(declData)
+                    is AVarStmt -> s - d.declIds.toSet()
+                    is AReturnStmt -> s + d.value.appearingIds(declData)
+                    is AOutputStmt -> s + d.value.appearingIds(declData)
                     else -> s
             }
             else -> s

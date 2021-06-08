@@ -87,5 +87,5 @@ class DotGraph(val title: String, val nodes: Iterable<DotNode>, val edges: Itera
 
     override fun toString(): String = toDotString()
 
-    override fun toDotString() = "digraph " + title + "{" + (nodes + edges).fold(""){str, elm -> str + elm.toDotString() + "\n"} + "}"
+    override fun toDotString() = "digraph " + title + "{\n" + (nodes + edges).fold(""){str, elm -> str + elm.toDotString() + "\n"} + "}"
 }

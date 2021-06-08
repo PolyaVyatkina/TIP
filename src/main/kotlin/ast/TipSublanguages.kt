@@ -33,7 +33,7 @@ data class NoFunctionPointers(val declData: DeclarationData) : TipSublanguages {
                     node.args.forEach { visit(it, arg) }
                 }
             is AIdentifier ->
-                if (node is AFunDeclaration)
+                if (node.declaration(declData) is AFunDeclaration)
                     languageRestrictionViolation("Identifier $node is a function identifier not appearing in a direct call expression")
             else -> visitChildren(node, arg)
         }

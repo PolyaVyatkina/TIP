@@ -93,7 +93,7 @@ class RunOption {
 object Tip {
 
     init {
-        Log.defaultLevel = Log.Level.VERBOSE
+        Log.defaultLevel = Log.Level.INFO
     }
 
     val log = Log.logger(this.javaClass)
@@ -177,9 +177,9 @@ object Tip {
 
                 options.dfAnalysis.forEach {
                     if (!it.value.interprocedural()) {
-                        val an: FlowSensitiveAnalysis<CfgNode, *>? = FlowSensitiveAnalysisObj.select(it.key, it.value, wcfg, declData)
+                        val an: FlowSensitiveAnalysis<*, *>? = FlowSensitiveAnalysisObj.select(it.key, it.value, wcfg, declData)
                         // run the analysis
-                        val res = an!!.analyze()
+                        val res = an!!.analyze() as Map<CfgNode, *>
                         Output.output(file, DataFlowOutput(it.key), wcfg.toDot({ node ->
                             Output.labeler(res, node)
                         }, { node -> Output.dotIder(node) }), options.out)
@@ -213,7 +213,7 @@ object Tip {
                         val res =
                             if (v.contextsensitive())
                                 Output.transform(an.analyze() as Map<Pair<CallContext, CfgNode>, *>)
-                            else an.analyze()
+                            else an.analyze() as Map<CfgNode, *>
                         Output.output(file, DataFlowOutput(s), wcfg.toDot({ node -> Output.labeler(res, node) },
                             { node -> Output.dotIder(node) }), options.out
                         )

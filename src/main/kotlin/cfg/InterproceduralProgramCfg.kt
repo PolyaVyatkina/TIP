@@ -145,10 +145,15 @@ class InterproceduralProgramCfg(
 
     val graph = this
 
+    init {
+        // Check the calls are normalized
+        NormalizedCalls(declData).assertContainsProgram(program)
+    }
+
     /**
      * The node corresponding to entry of the main function.
      */
-    val programEntry = funEntries[program.mainFunction()]
+    fun programEntry() = funEntries[program.mainFunction()]
 
     /**
      * Map from [[cfg.CfgFunEntryNode]] to the set of [[cfg.CfgCallNode]]s calling the function.
@@ -208,8 +213,6 @@ class InterproceduralProgramCfg(
         funEntries.values.associateWith { entry -> nodesRec(entry).toSet() }
 
     init {
-        // Check the calls are normalized
-        NormalizedCalls(declData).assertContainsProgram(program)
         initdeps()
     }
 

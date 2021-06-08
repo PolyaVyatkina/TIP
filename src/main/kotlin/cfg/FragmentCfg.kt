@@ -38,12 +38,7 @@ object FragmentCfgObj {
                     entry.concat(blk).concat(exit)
                 }
                 is AAssignStmt -> nodeBuilder(CfgStmtNode(data = node))
-                is ABlock -> {
-                    node.body.fold(seqUnit()) { g, stmt ->
-                        g.concat(recGen(stmt))
-                    }
-                }
-                is ANestedBlockStmt -> {
+                is IABlock -> {
                     node.body.fold(seqUnit()) { g, stmt ->
                         g.concat(recGen(stmt))
                     }
@@ -53,8 +48,12 @@ object FragmentCfgObj {
                     val trueBranch = recGen(node.ifBranch)
                     val falseBranch = node.elseBranch?.let { recGen(it) }
                     val guardedTrue = ifGuard.concat(trueBranch)
-                    val guardedFalse = listOf(falseBranch?.let { ifGuard.concat(it) })
-                    guardedFalse.fold(guardedTrue.union(ifGuard)) { gf, _ -> guardedTrue.union(gf) }
+                    val guardedFalse = falseBranch?.let { ifGuard.concat(it) }
+                    if (guardedFalse != null)
+                        listOf(guardedFalse).fold(guardedTrue.union(ifGuard)) { _, gf ->
+                            guardedTrue.union(gf)
+                        }
+                    else guardedTrue.union(ifGuard)
                 }
                 is AOutputStmt -> nodeBuilder(CfgStmtNode(data = node))
                 is AReturnStmt -> nodeBuilder(CfgStmtNode(data = node))
@@ -102,7 +101,7 @@ open class FragmentCfg(val graphEntries: Set<CfgNode>, val graphExits: Set<CfgNo
     /**
      * Returns the set of nodes in the CFG.
      */
-    val nodes: Set<CfgNode> = graphEntries.flatMap { entry -> nodesRec(entry) }.toSet()
+    val nodes: Set<CfgNode> = graphEntries.flatMap { entry -> nodesRec(entry).toSet() }.toSet()
 
     protected fun nodesRec(n: CfgNode, visited: MutableSet<CfgNode> = mutableSetOf()): MutableSet<CfgNode> {
         if (!visited.contains(n)) {

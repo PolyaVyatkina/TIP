@@ -57,8 +57,7 @@ object AstPrinters {
                     "error ${n.value.print(printer)};"
                 is AWhileStmt ->
                     "while (${n.guard.print(printer)}) ${n.innerBlock.print(printer)}"
-
-                is ABlock ->
+                is IABlock ->
                     "{\n${n.body.map { it.print(printer) }.joinToString("\n") }\n}"
                 is AReturnStmt ->
                     "return ${n.value.print(printer)};"

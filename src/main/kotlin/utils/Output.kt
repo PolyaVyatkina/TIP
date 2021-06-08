@@ -21,7 +21,6 @@ object Output {
      * @param outFolder the output directory
      */
     fun output(file: File, kind: OutputKind, content: String, outFolder: File) {
-        println(content)
         val extension = when (kind) {
             OtherOutput(OutputKindE.CFG) -> "_cfg.dot"
             OtherOutput(OutputKindE.ICFG) -> "_icfg.dot"
@@ -29,7 +28,7 @@ object Output {
             is DataFlowOutput -> "_$kind.dot"
             else -> throw IllegalArgumentException()
         }
-        val outFile = File(outFolder, "${file.nameWithoutExtension}_$extension")
+        val outFile = File(outFolder, "${file.name}_$extension")
         val pw = PrintWriter(outFile, "UTF-8")
         pw.write(content)
         pw.close()
@@ -74,9 +73,9 @@ object Output {
      */
     fun labeler(res: Map<CfgNode, *>, n: CfgNode) =
         when (n) {
-            is CfgFunEntryNode -> "Function ${n.data.name} entry\n${res.getOrDefault(n, "-")}"
-            is CfgFunExitNode -> "Function ${n.data.name} exit\n${res.getOrDefault(n, "-")}"
-            else -> "$n\n${res.getOrDefault(n, "-")}"
+            is CfgFunEntryNode -> "Function ${n.data.name} entry ${res.getOrDefault(n, "-")}"
+            is CfgFunExitNode -> "Function ${n.data.name} exit ${res.getOrDefault(n, "-")}"
+            else -> "$n ${res.getOrDefault(n, "-")}"
         }
 
 

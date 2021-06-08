@@ -1,5 +1,6 @@
 package ast
 
+import ast.AstPrinters.EMPTY_PRINTER
 import ast.AstPrinters.print
 import types.TipType
 
@@ -33,7 +34,7 @@ class AstNodeWithType(val n: AstNode, val data: TypeData) {
             is AFunDeclaration ->
                 "${it.name}(${it.args.joinToString(",") { it.value }}): " +
                         "${n.theType(data) ?: "??"}\n${AstNodeWithType(it.stmts, data).printer()}"
-            else -> " "
+            else -> EMPTY_PRINTER
         }
     }
 

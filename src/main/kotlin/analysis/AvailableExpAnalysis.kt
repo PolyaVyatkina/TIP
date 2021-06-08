@@ -42,10 +42,8 @@ abstract class AvailableExpAnalysis(cfg: IntraproceduralProgramCfg, val declData
                     is AAssignStmt -> {
                         val l = d.left
                         if (l is AIdentifier) {
-                            val r = d.right.appearingExpressions().map { UnlabelledNode(it, declData) }.filter { e ->
-                                !(e.n.appearingIds(declData).containsAll(l.appearingIds(declData)))
-                            }
-                            s + r
+                            (s + d.right.appearingExpressions().map { UnlabelledNode(it, declData) }).filter { e ->
+                                !(e.n.appearingIds(declData).containsAll(l.appearingIds(declData)))}.toSet()
                         } else throw IllegalArgumentException()
                     }
                     is AExpr -> s + d.appearingExpressions().map { UnlabelledNode(it, declData) }

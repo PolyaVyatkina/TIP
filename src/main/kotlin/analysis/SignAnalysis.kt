@@ -36,6 +36,7 @@ interface IntraprocSignAnalysisFunctions {
     fun localTransfer(n: CfgNode, s: Element): Element {
         NoPointers.assertContainsNode(n.data)
         NoCalls.assertContainsNode(n.data)
+        println(s)
         return when (n) {
             is CfgStmtNode -> {
                 when (val d = n.data) {
@@ -49,7 +50,6 @@ interface IntraprocSignAnalysisFunctions {
                             is AUnaryOp<*> -> NoPointers.languageRestrictionViolation("${n.data} not allowed")
                             is AIdentifier ->
                                 when (r) {
-                                    is ACallFuncExpr -> s + (l.declaration(declData) to FlatLattice.Bot)
                                     is ABinaryOp -> s + (l.declaration(declData) to SignLattice.eval(r, s, declData))
                                     is ANumber -> s + (l.declaration(declData) to SignLattice.eval(r, s, declData))
                                     is AInput -> s + (l.declaration(declData) to SignLattice.eval(r, s, declData))

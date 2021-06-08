@@ -127,7 +127,7 @@ class PairLattice<A, L1 : Lattice<A>, B, L2 : Lattice<B>>(val sublattice1: L1, v
 class MapLattice<A, T, out L : Lattice<T>>(ch: (A) -> Boolean, val sublattice: L) : Lattice<MapWithDefault<A, T>> {
     // note: 'ch' isn't used in the class, but having it as a class parameter avoids a lot of type annotations
 
-    override val bottom: MapWithDefault<A, T> = mutableMapOf<A, T>().withDefaultValue(sublattice.bottom)
+    override val bottom: MapWithDefault<A, T> = mapOf<A, T>().withDefaultValue(sublattice.bottom)
 
     override fun lub(x: MapWithDefault<A, T>, y: MapWithDefault<A, T>): MapWithDefault<A, T> =
         x.keys.fold(y) { m, a -> m + (a to sublattice.lub(x[a], y[a])) }.withDefaultValue(sublattice.bottom)

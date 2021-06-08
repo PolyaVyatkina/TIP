@@ -9,17 +9,15 @@ import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
-import com.github.h0tk3y.betterParse.parser.Parsed
 import com.github.h0tk3y.betterParse.parser.Parser
-import java.io.File
 
 interface Comments : Parser<AstNode> {
-    var lastBreaks: MutableList<Int>
+    val lastBreaks: MutableList<Int>
+        get() = mutableListOf(0)
 
     fun offset2Loc(i: Int): Loc {
         val idx = lastBreaks.indexOfLast { it <= i }
-        return if (idx == -1) Loc(1, i - lastBreaks[0] + 1)
-        else Loc(idx + 1, i - lastBreaks[idx] + 1)
+        return Loc(idx + 1, i - lastBreaks[idx] - 1)
     }
 
     val newLine: Parser<TokenMatch>
@@ -71,7 +69,7 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
     override var lastBreaks: MutableList<Int> = mutableListOf(0)
 
     override val newLine by Cursor * (newLineToken1 or newLineToken2 or newLineToken3 or newLineToken4) map { (cur, token) ->
-        lastBreaks.add(cur)
+        lastBreaks.add(cur-1)
         token
     }
 
@@ -239,12 +237,14 @@ fun main() {
 //    println("\nSuccess = $success, failure = $failure")
 
     grammar.lastBreaks = mutableListOf(0)
-    val res = grammar.tryParseToEnd("test(f,a){\n" +
-            "    return (*f)(a);\n" +
-            "}\n" +
-            "\n" +
-            "test2(g,b){\n" +
-            "    return (*g)(b);\n" +
-            "}")
+    val res = grammar.tryParseToEnd(
+        "test(f,a){\n" +
+                "    return (*f)(a);\n" +
+                "}\n" +
+                "\n" +
+                "test2(g,b){\n" +
+                "    return (*g)(b);\n" +
+                "}"
+    )
     println(res)
 }

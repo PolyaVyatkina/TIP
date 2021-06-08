@@ -32,13 +32,12 @@ abstract class FlowSensitiveAnalysis<N, T>(cfg: FragmentCfg) : Analysis<Map<N, T
  */
 object FlowSensitiveAnalysisObj {
 
-    fun select(kind: AnalysisType, options: AnalysisOption, cfg: FragmentCfg, declData: DeclarationData): FlowSensitiveAnalysis<CfgNode, *>? {
+    fun select(kind: AnalysisType, options: AnalysisOption, cfg: FragmentCfg, declData: DeclarationData): FlowSensitiveAnalysis<*, *>? {
         val typedCfg =
             if (options == iwli ||
                 options == iwlip ||
                 options == csiwlip ||
-                options == cfiwlip ||
-                options == ide
+                options == cfiwlip
             )
                 if (cfg is InterproceduralProgramCfg)
                     cfg
@@ -93,15 +92,11 @@ object FlowSensitiveAnalysisObj {
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             csiwlip -> when (kind) {
-                sign -> CallStringSignAnalysis(typedCfg as InterproceduralProgramCfg, declData) as FlowSensitiveAnalysis<CfgNode, *>
+                sign -> CallStringSignAnalysis(typedCfg as InterproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
             cfiwlip -> when (kind) {
-                sign -> FunctionalSignAnalysis(typedCfg as InterproceduralProgramCfg, declData) as FlowSensitiveAnalysis<CfgNode, *>
-                else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
-            }
-            ide -> when (kind) {
-//                copyconstprop -> CopyConstantPropagationIDEAnalysis(typedCfg, declData)
+                sign -> FunctionalSignAnalysis(typedCfg as InterproceduralProgramCfg, declData)
                 else -> throw RuntimeException("Unsupported solver option `$options` for the analysis $kind")
             }
         }
@@ -112,7 +107,7 @@ object FlowSensitiveAnalysisObj {
      * A flow sensitive analysis kind
      */
     enum class AnalysisType {
-        sign, livevars, available, vbusy, reaching, constprop, interval, copyconstprop
+        sign, livevars, available, vbusy, reaching, constprop, interval
     }
 
     /**
@@ -131,7 +126,7 @@ object FlowSensitiveAnalysisObj {
      * - ide: use the IDE solver
      */
     enum class AnalysisOption {
-        simple, Disabled, wl, wli, wliw, wliwn, wlip, iwli, iwlip, csiwlip, cfiwlip, ide;
+        simple, Disabled, wl, wli, wliw, wliwn, wlip, iwli, iwlip, csiwlip, cfiwlip;
 
         fun interprocedural(): Boolean =
             when (this) {
@@ -139,7 +134,6 @@ object FlowSensitiveAnalysisObj {
                 iwlip -> true
                 csiwlip -> true
                 cfiwlip -> true
-                ide -> true
                 else -> false
             }
 

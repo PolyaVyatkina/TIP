@@ -3,9 +3,6 @@ package utils
 fun <K, V> Map<K, V>.withDefaultValue(default: V) = MapWithDefault(this) { default }
 fun <K, V> Map<K, V>.withDefault(default: (K) -> V) = MapWithDefault(this, default)
 
-operator fun <K,V> MapWithDefault<K, V>.plus(pair: Pair<K, V>): MapWithDefault<K, V> =
-    this.apply { put(pair.first, pair.second) }
-
 class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K, V>, AbstractMap<K, V>() {
 
     private val map = map.toMutableMap()
@@ -15,11 +12,12 @@ class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K
     operator fun plus(pair: Pair<K, V>): MapWithDefault<K, V> =
         this.apply { put(pair.first, pair.second) }.toMap().withDefault(default)
 
-    operator fun plus(pairs: Iterable<Pair<K, V>>): MapWithDefault<K, V> =
-        this.apply { putAll(pairs) }.toMap().withDefault(default)
-
     operator fun plus(map: Map<out K, V>): MapWithDefault<K, V> =
         this.apply { putAll(map) }.toMap().withDefault(default)
+
+    operator fun plusAssign(pair: Pair<K, V>) {
+        this.map[pair.first] = pair.second
+    }
 
     override val size: Int
         get() = this.map.size
@@ -47,15 +45,21 @@ class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K
 
     override fun remove(key: K): V? = this.map.remove(key)
 
-//    override fun equals(other: Any?): Boolean {
-//        if (other === this) return true
-//        if (other !is Map<*, *>) return false
-//        if (size != other.size) return false
-//
-//        for (key in keys)
-//            if (other[key] != this[key])
-//                return false
-//
-//        return true
-//    }
+    override fun equals(other: Any?): Boolean {
+        if (other === this) return true
+        if (other !is Map<*, *>) return false
+        if (size != other.size) return false
+        if (!keys.containsAll(other.keys)) return false
+        for (entry in entries)
+            if (other[entry.key] != entry.value)
+                return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + default.hashCode()
+        result = 31 * result + map.hashCode()
+        return result
+    }
 }

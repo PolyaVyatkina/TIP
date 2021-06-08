@@ -190,8 +190,8 @@ interface ListSetWorklist<N> : Worklist<N> {
     override fun run(first: Set<N>) {
         worklist = first
         while (worklist.isNotEmpty()) {
-            val n = worklist.last()
-            worklist = worklist - worklist.last()
+            val n = worklist.first()
+            worklist = worklist - worklist.first()
             process(n)
         }
     }
@@ -213,7 +213,7 @@ interface WorklistFixpointSolver<N, T> : MapLatticeSolver<N, T>, ListSetWorklist
         FixpointSolvers.log.verb("Processing $n in state $xn")
         val y = funsub(n, x)
         if (y != xn) {
-            x + (n to y)
+            x.plusAssign(n to y)
             add(outdep(n))
         }
     }
@@ -327,13 +327,13 @@ interface WorklistFixpointPropagationSolver<N, T> : WorklistFixpointSolverWithIn
         val xn = x[n]
         // apply the transfer function
         FixpointSolvers.log.verb("Processing $n in state $xn")
-        val y = transfer(n, xn!!)
+        val y = transfer(n, xn)
         // propagate to all nodes that depend on this one
         for (m in outdep(n)) propagate(y, m)
     }
 
     override fun analyze(): MapWithDefault<N, Lifted<T>> {
-        x = first.fold(lattice.bottom) { l, cur -> l.plus(Pair(cur, init))  }
+        x = first.fold(lattice.bottom) { l, cur -> l + (cur to init)  }
         run(first)
         return x
     }
