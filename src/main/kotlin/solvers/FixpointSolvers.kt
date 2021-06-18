@@ -363,7 +363,7 @@ interface WorklistFixpointSolverWithInitAndSimpleWidening<N, T> : WorklistFixpoi
         FixpointSolvers.log.verb("Processing $n in state $xn")
         val y = funsub(n, x)
         if (y != xn) {
-            x = x + (n to if (outdep(n).any { backedge(n, it) } ) widen(y) else y)
+            x.plusAssign((n to if (outdep(n).any { backedge(n, it) } ) widen(y) else y))
             add(outdep(n))
         }
     }

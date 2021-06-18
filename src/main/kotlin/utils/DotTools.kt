@@ -6,10 +6,7 @@ package utils
 object IDGenerator {
     private var current: Int = 0
 
-    fun getNewId(): Int {
-        current += 1
-        return current
-    }
+    fun getNewId(): Int = ++current
 }
 
 /**

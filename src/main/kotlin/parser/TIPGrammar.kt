@@ -9,6 +9,7 @@ import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
+import com.github.h0tk3y.betterParse.parser.Parsed
 import com.github.h0tk3y.betterParse.parser.Parser
 
 interface Comments : Parser<AstNode> {
@@ -238,13 +239,35 @@ fun main() {
 
     grammar.lastBreaks = mutableListOf(0)
     val res = grammar.tryParseToEnd(
-        "test(f,a){\n" +
+          "test(f,a){\n" +
                 "    return (*f)(a);\n" +
-                "}\n" +
-                "\n" +
-                "test2(g,b){\n" +
-                "    return (*g)(b);\n" +
-                "}"
+                "}\n"
     )
     println(res)
+    val exp = AProgram(
+        listOf(
+            AFunDeclaration(
+                "test",
+                listOf(AIdentifierDeclaration("f", Loc(1,1)), AIdentifierDeclaration("a", Loc(1,3))),
+                AFunBlockStmt(
+                    listOf(),
+                    listOf(),
+                    AReturnStmt(
+                        ACallFuncExpr(
+                            AUnaryOp(DerefOp, AIdentifier("f", Loc(2,9)), Loc(2,8)),
+                            listOf(AIdentifier("a", Loc(2,12))),
+                            indirect = true,
+                            Loc(2,7)
+                        ),
+                        Loc(2,5)
+                    ),
+                    Loc(2,-1)
+                ),
+                Loc(1,-1)
+            )
+        ),
+        Loc(1,-1)
+    )
+    if (res is Parsed<*>)
+        println(res.value == exp)
 }

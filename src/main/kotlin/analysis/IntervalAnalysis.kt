@@ -121,7 +121,7 @@ open class IntervalAnalysisWorklistSolverWithWidening(val cfg: ProgramCfg, declD
         n.appearingConstants().map { x ->
             IntNum(x.value)
         } + MInf + PInf
-    }
+    }.toSet()
 
     override fun backedge(src: CfgNode, dst: CfgNode): Boolean = cfg.rank()[src]!! > cfg.rank()[dst]!!
 
@@ -132,7 +132,13 @@ open class IntervalAnalysisWorklistSolverWithWidening(val cfg: ProgramCfg, declD
     override fun widen(s: Lifted<MapWithDefault<ADeclaration, Pair<Num, Num>>>): Lifted<MapWithDefault<ADeclaration, Pair<Num, Num>>> =
         when (s) {
             is LiftLattice.Bottom<*> -> s
-            is LiftLattice.Lift<*> -> TODO() //<--- Complete here
+            is LiftLattice.Lift<MapWithDefault<ADeclaration, Pair<Num, Num>>> -> {
+                val m = s.n
+                for (i in m) {
+                    m[i.key] = maxB(i.value.first)!! to minB(i.value.second)!!
+                }
+                lattice.sublattice.lift(m)
+            }
             else -> throw IllegalArgumentException()
         }
 

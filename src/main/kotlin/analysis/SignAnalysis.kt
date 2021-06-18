@@ -36,7 +36,6 @@ interface IntraprocSignAnalysisFunctions {
     fun localTransfer(n: CfgNode, s: Element): Element {
         NoPointers.assertContainsNode(n.data)
         NoCalls.assertContainsNode(n.data)
-        println(s)
         return when (n) {
             is CfgStmtNode -> {
                 when (val d = n.data) {
@@ -106,17 +105,31 @@ interface InterprocSignAnalysisFunctions :
 
         return when (n) {
             // function entry nodes
-            is CfgFunEntryNode -> TODO() //<--- Complete here
+            is CfgFunEntryNode -> {
+                val pr: CfgCallNode = n.succ.first { it is CfgCallNode } as CfgCallNode
+                val actualParams = (pr.data.right as ACallFuncExpr).args
+                val j = lattice.sublattice.unlift(join(n, x))
+                val ev = evalArgs(n.declaredVarsAndParams(), actualParams, j)
+                lattice.sublattice.lift(ev)
+            }
 
             // after-call nodes
-            is CfgAfterCallNode -> TODO() //<--- Complete here
+            is CfgAfterCallNode -> {
+                val r = lattice.sublattice.unlift(x[n]!!)[AstOps.returnId]
+                val j = lattice.sublattice.unlift(join(n, x))
+                j[AstOps.returnId] = r
+                lattice.sublattice.lift(j)
+            }
 
             // return node
             is CfgStmtNode -> {
-                val ret: AReturnStmt = n.data as AReturnStmt
-                val j = lattice.sublattice.unlift(join(n, x))
-                val el = AstOps.returnId to lattice.sublattice.sublattice.sublattice.eval(ret.value, j, declData)
-                lattice.sublattice.lift(j + el)
+                val d = n.data
+                if (d is AReturnStmt) {
+                    val j = lattice.sublattice.unlift(join(n, x))
+                    val el = AstOps.returnId to lattice.sublattice.sublattice.sublattice.eval(d.value, j, declData)
+                    lattice.sublattice.lift(j + el)
+                }
+                else super.funsub(n, x)
             }
 
             // call nodes (like no-ops here)
@@ -216,8 +229,8 @@ interface ContextSensitiveSignAnalysisFunctions<C : CallContext>
         fun returnflow(exitContext: C, funexit: CfgFunExitNode, callerContext: C, aftercall: CfgAfterCallNode) {
             when (val exit = x[exitContext to funexit]) {
                 is Lift -> {
-                    val newEl = cfg.AfterCallNodeContainsAssigment(aftercall).targetIdentifier.declaration(declData) to exit.n[AstOps.returnId]!!
-                    val newState = lattice.sublattice.unlift(x[callerContext to aftercall.pred.first()]!!) + newEl
+                    val newEl = cfg.AfterCallNodeContainsAssigment(aftercall).targetIdentifier.declaration(declData) to exit.n[AstOps.returnId]
+                    val newState = lattice.sublattice.unlift(x[callerContext to aftercall.pred.first()]) + newEl
                     propagate(lattice.sublattice.lift(newState), callerContext to aftercall)
                 }
                 is LiftLattice.Bottom -> {

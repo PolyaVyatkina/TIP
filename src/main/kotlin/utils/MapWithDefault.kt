@@ -9,11 +9,16 @@ class MapWithDefault<K, V>(map: Map<K, V>, val default: (K) -> V) : MutableMap<K
 
     override operator fun get(key: K): V = this.map[key] ?: default(key)
 
-    operator fun plus(pair: Pair<K, V>): MapWithDefault<K, V> =
-        this.apply { put(pair.first, pair.second) }.toMap().withDefault(default)
-
-    operator fun plus(map: Map<out K, V>): MapWithDefault<K, V> =
-        this.apply { putAll(map) }.toMap().withDefault(default)
+    operator fun plus(pair: Pair<K, V>): MapWithDefault<K, V> {
+        val m = this.map.toMutableMap()
+        m.apply { put(pair.first, pair.second) }
+        return m.withDefault(default)
+    }
+    operator fun plus(map: Map<out K, V>): MapWithDefault<K, V> {
+        val m = this.map.toMutableMap()
+        m.apply { putAll(map) }
+        return m.withDefault(default)
+    }
 
     operator fun plusAssign(pair: Pair<K, V>) {
         this.map[pair.first] = pair.second

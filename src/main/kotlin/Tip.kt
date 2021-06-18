@@ -1,8 +1,8 @@
 import analysis.*
 import ast.AProgram
-import ast.AstNodeWithType
 import ast.DeclarationData
 import ast.TypeData
+import ast.toTypedString
 import cfg.CfgNode
 import cfg.InterproceduralProgramCfgObj
 import cfg.IntraproceduralProgramCfgObj
@@ -93,7 +93,7 @@ class RunOption {
 object Tip {
 
     init {
-        Log.defaultLevel = Log.Level.INFO
+        Log.defaultLevel = Log.Level.VERBOSE
     }
 
     val log = Log.logger(this.javaClass)
@@ -212,8 +212,8 @@ object Tip {
                         // run the analysis
                         val res =
                             if (v.contextsensitive())
-                                Output.transform(an.analyze() as Map<Pair<CallContext, CfgNode>, *>)
-                            else an.analyze() as Map<CfgNode, *>
+                                Output.transform(an.analyze() as MapWithDefault<Pair<CallContext, CfgNode>, *>)
+                            else an.analyze() as MapWithDefault<CfgNode, *>
                         Output.output(file, DataFlowOutput(s), wcfg.toDot({ node -> Output.labeler(res, node) },
                             { node -> Output.dotIder(node) }), options.out
                         )
@@ -224,7 +224,7 @@ object Tip {
             // run type analysis, if selected
             if (options.types) {
                 val typeData: TypeData = TypeAnalysis(programNode, declData).analyze()
-                Output.output(file, OtherOutput(OutputKindE.TYPES), AstNodeWithType(programNode, typeData).toTypedString(), options.out)
+                Output.output(file, OtherOutput(OutputKindE.TYPES), programNode.toTypedString(typeData), options.out)
             }
 
 //            // run Andersen analysis, if selected

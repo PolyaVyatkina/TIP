@@ -82,7 +82,7 @@ object Output {
     /**
      * Transforms a map from pairs of call contexts and CFG nodes to values into a map from CFG nodes to strings.
      */
-    fun transform(res: Map<Pair<CallContext, CfgNode>, *>): Map<CfgNode, String> {
+    fun transform(res: MapWithDefault<Pair<CallContext, CfgNode>, *>): Map<CfgNode, String> {
         val m = mutableMapOf<CfgNode, List<String>>().withDefaultValue(null)
         res.forEach {
             m[it.key.second] = listOf("${it.key.first}: ${it.value}", m[it.key.second].toString())

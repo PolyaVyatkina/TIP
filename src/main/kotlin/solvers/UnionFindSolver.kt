@@ -1,5 +1,8 @@
 package solvers
 
+import Tip.log
+import utils.Log
+import utils.Logger
 import utils.withDefault
 
 /**
@@ -20,10 +23,12 @@ class UnionFindSolver<A> {
      * When unifying a variable and a non-variable term, the non-variable term has higher priority for becoming the representative.
      */
     fun unify(t1: Term<A>, t2: Term<A>) {
+        log.verb("Unifying $t1 and $t2")
         mkSet(t1)
         mkSet(t2)
         val rep1 = find(t1)
         val rep2 = find(t2)
+        log.verb("Unifying $t1 and $t2 (with representatives $rep1 and $rep2)")
 
         if (rep1 == rep2) return
         when {
