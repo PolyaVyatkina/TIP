@@ -109,15 +109,17 @@ interface InterprocSignAnalysisFunctions :
                 val pr: CfgCallNode = n.succ.first { it is CfgCallNode } as CfgCallNode
                 val actualParams = (pr.data.right as ACallFuncExpr).args
                 val j = lattice.sublattice.unlift(join(n, x))
-                val ev = evalArgs(n.declaredVarsAndParams(), actualParams, j)
+                val ev = evalArgs(n.data.args, actualParams, j)
                 lattice.sublattice.lift(ev)
             }
 
             // after-call nodes
             is CfgAfterCallNode -> {
-                val r = lattice.sublattice.unlift(x[n]!!)[AstOps.returnId]
                 val j = lattice.sublattice.unlift(join(n, x))
-                j[AstOps.returnId] = r
+                val r = j[AstOps.returnId]
+                val lhv = n.data.left
+                check(lhv is AIdentifier)
+                j[lhv.declaration(declData)] = r
                 lattice.sublattice.lift(j)
             }
 

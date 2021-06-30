@@ -46,10 +46,10 @@ object AstOps {
                 when (node) {
                     is AIdentifier -> {
                         val d = node.declaration(declData)
-                        if (d is AIdentifierDeclaration || d is AFunDeclaration) ids += d
+                        if (d is AIdentifierDeclaration || d is AFunDeclaration) ids.add(d)
                     }
-                    is AIdentifierDeclaration -> ids += node
-                    is AFunDeclaration -> ids += node
+                    is AIdentifierDeclaration -> ids.add(node)
+                    is AFunDeclaration -> ids.add(node)
                     else -> {
                     }
                 }
@@ -57,7 +57,7 @@ object AstOps {
             }
         }
         idFinder.visit(this, null)
-        return ids
+        return ids.toSet()
     }
 
     /**

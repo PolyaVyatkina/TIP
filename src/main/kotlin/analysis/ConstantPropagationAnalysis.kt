@@ -13,7 +13,8 @@ import solvers.SimpleWorklistFixpointSolver
 import utils.MapWithDefault
 import utils.withDefaultValue
 
-abstract class ConstantPropagationAnalysis(cfg: IntraproceduralProgramCfg, val declData: DeclarationData) : FlowSensitiveAnalysis<CfgNode, MapWithDefault<ADeclaration, FlatElement>>(cfg) {
+abstract class ConstantPropagationAnalysis(cfg: IntraproceduralProgramCfg, val declData: DeclarationData) :
+    FlowSensitiveAnalysis<CfgNode, MapWithDefault<ADeclaration, FlatElement>>(cfg) {
 
     val declaredVars: Set<ADeclaration> = cfg.nodes.flatMap { it.declaredVars() }.toSet()
 

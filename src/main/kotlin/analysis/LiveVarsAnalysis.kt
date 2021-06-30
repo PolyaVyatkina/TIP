@@ -26,8 +26,9 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
 
     override val lattice = MapLattice(chNodes, powersetLattice)
 
-    fun transfer(n: CfgNode, s: Set<ADeclaration>): Set<ADeclaration> =
-        when (n) {
+    fun transfer(n: CfgNode, s: Set<ADeclaration>): Set<ADeclaration> {
+        println(s)
+        return when (n) {
             is CfgFunExitNode -> lattice.sublattice.bottom
             is CfgStmtNode ->
                 when (val d = n.data) {
@@ -36,16 +37,16 @@ abstract class LiveVarsAnalysis(cfg: IntraproceduralProgramCfg, val declData: De
                         val l = d.left
                         if (l is AIdentifier) {
                             s - l.declaration(declData) + d.right.appearingIds(declData)
-                        }
-                        else NoPointers.languageRestrictionViolation("$l not allowed")
+                        } else NoPointers.languageRestrictionViolation("$l not allowed")
                     }
-                    is AVarStmt -> s - d.declIds.toSet()
+                    is AVarStmt -> s - d.appearingIds(declData)
                     is AReturnStmt -> s + d.value.appearingIds(declData)
                     is AOutputStmt -> s + d.value.appearingIds(declData)
                     else -> s
-            }
+                }
             else -> s
         }
+    }
 }
 
 /**
