@@ -4,19 +4,19 @@ import ast.*
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
-import com.github.h0tk3y.betterParse.grammar.tryParseToEnd
-import com.github.h0tk3y.betterParse.lexer.*
-import com.github.h0tk3y.betterParse.parser.Parsed
+import com.github.h0tk3y.betterParse.lexer.Token
+import com.github.h0tk3y.betterParse.lexer.TokenMatch
+import com.github.h0tk3y.betterParse.lexer.literalToken
+import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
-import java.io.File
 
 interface Comments : Parser<AstNode> {
-    var lastBreaks: MutableList<Int>
+    val lastBreaks: MutableList<Int>
+        get() = mutableListOf(0)
 
     fun offset2Loc(i: Int): Loc {
         val idx = lastBreaks.indexOfLast { it <= i }
-        return if (idx == -1) Loc(1, i - lastBreaks[0] + 1)
-        else Loc(idx + 1, i - lastBreaks[idx] + 1)
+        return Loc(idx + 1, i - lastBreaks[idx] - 1)
     }
 
     val newLine: Parser<TokenMatch>
@@ -29,7 +29,7 @@ interface Comments : Parser<AstNode> {
 class TIPGrammar : Grammar<AstNode>(), Comments {
 
     val commentToken by regexToken("//[^\n\r]*")
-    val blockCommentToken by tokenBetween("/*", "*/", allowNested = true)
+    val blockCommentToken by tokenBetween("/*", "*/", allowNested = false)
     val newLineToken1 by regexToken("\r\n")
     val newLineToken2 by regexToken("\n\r")
     val newLineToken3 by regexToken("\r")
@@ -68,7 +68,7 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
     override var lastBreaks: MutableList<Int> = mutableListOf(0)
 
     override val newLine by Cursor * (newLineToken1 or newLineToken2 or newLineToken3 or newLineToken4) map { (cur, token) ->
-        lastBreaks.add(cur)
+        lastBreaks.add(cur - 1)
         token
     }
 
@@ -136,12 +136,12 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
 
     val assignableExpression: Parser<Assignable<DerefOp>> by identifier or leftHandUnaryPointerExpression
 
-    val zeraryPointerExpression by (Cursor * wspStr(allocToken)) or (Cursor * wspStr(nullToken)) map { (cur, token) ->
-        if (token.text == allocToken.name) AAlloc(offset2Loc(cur))
+    val zeraryPointerExpression: Parser<AExpr> by (Cursor * wspStr(allocToken)) or (Cursor * wspStr(nullToken)) map { (cur, token) ->
+        if (token.text == "alloc") AAlloc(offset2Loc(cur))
         else ANull(offset2Loc(cur))
     }
 
-    val unaryPointerExpression by (Cursor * refOp * identifier) or (Cursor * derefOp * parser { atom }) map { (cur, op, expr) ->
+    val unaryPointerExpression: Parser<AExpr> by (Cursor * refOp * identifier) or (Cursor * derefOp * parser { atom }) map { (cur, op, expr) ->
         AUnaryOp(op, expr, offset2Loc(cur))
     }
 
@@ -183,10 +183,11 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
 
     val funActualArgs by -wspStr(leftParen) and separatedTerms(expression, comma, acceptZero = true) and -wspStr(rightParen)
 
-    val funApp: Parser<AExpr> by (Cursor * parens * funActualArgs) or (Cursor * identifier * funActualArgs) map { (cur, id, args) ->
-        if (id == parens) ACallFuncExpr(id, args, true, offset2Loc(cur))
-        else ACallFuncExpr(id, args, false, offset2Loc(cur))
-    }
+    val funApp: Parser<AExpr> by ((Cursor * parens * funActualArgs) map { (cur, id, args) ->
+        ACallFuncExpr(id, args, true, offset2Loc(cur))
+    }) or ((Cursor * identifier * funActualArgs) map { (cur, id, args) ->
+        ACallFuncExpr(id, args, false, offset2Loc(cur))
+    })
 
     val statement: Parser<AStmtInNestedBlock> by outputParser or assignment or block or whileParser or ifParser or errorParser
 
@@ -206,24 +207,4 @@ class TIPGrammar : Grammar<AstNode>(), Comments {
     val program: Parser<AProgram> by Cursor * zeroOrMore(tipFunction) map { (cur, funs) ->
         AProgram(funs, offset2Loc(cur))
     }
-}
-
-fun main() {
-    val grammar = TIPGrammar()
-    var success = 0
-    var failure = 0
-    File("examples/").walk().forEach { file ->
-        if (file.isFile && file.name != "code.tip") {
-            val text = file.readText()
-            grammar.lastBreaks = mutableListOf(0)
-            val res = grammar.tryParseToEnd(text)
-            println("${file.name} – $res")
-            if (res is Parsed) success++
-            else {
-                failure++
-                println(file.name)
-            }
-        }
-    }
-    println("\nSuccess = $success, failure = $failure")
 }

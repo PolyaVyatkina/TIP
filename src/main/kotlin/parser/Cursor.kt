@@ -9,7 +9,7 @@ class CursorValue(override val nextPosition: Int) : Parsed<Int>() {
     override val value: Int get() = nextPosition
 }
 
-public object Cursor : Parser<Int> {
+object Cursor : Parser<Int> {
     override fun tryParse(tokens: TokenMatchesSequence, fromPosition: Int): ParseResult<Int> {
         return CursorValue(fromPosition)
     }

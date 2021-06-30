@@ -3,7 +3,7 @@ package parser
 import com.github.h0tk3y.betterParse.lexer.Token
 import com.github.h0tk3y.betterParse.lexer.literalToken
 
-public class TokenBetween(name: String?, ignored: Boolean,
+class TokenBetween(name: String?, ignored: Boolean,
                           val openToken: Token,
                           val closeToken: Token,
                           val allowNested: Boolean) : Token(name, ignored) {
@@ -26,11 +26,11 @@ public class TokenBetween(name: String?, ignored: Boolean,
         "${name ?: ""} ($openToken ... $closeToken)" + if (ignored) " [ignorable]" else ""
 }
 
-public fun tokenBetween(open: Token, close: Token, allowNested: Boolean = false, ignore: Boolean = false): Token {
+fun tokenBetween(open: Token, close: Token, allowNested: Boolean = false, ignore: Boolean = false): Token {
     return TokenBetween(null, ignore, open, close, allowNested)
 }
 
-public fun tokenBetween(open: String, close: String, allowNested: Boolean = false, ignore: Boolean = false): Token {
+fun tokenBetween(open: String, close: String, allowNested: Boolean = false, ignore: Boolean = false): Token {
     return TokenBetween(null, ignore,
         literalToken(open, ignore = ignore),
         literalToken(close, ignore = ignore),
